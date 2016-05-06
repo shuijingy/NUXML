@@ -64,7 +64,7 @@ namespace NUXML.Editor
 					if (configuration == null)
 					{
 						// create new asset                        
-						System.IO.Directory.CreateDirectory("Assets/NUXML/_Framework/Configurations/");
+						System.IO.Directory.CreateDirectory("Assets/NUXML/Framework/Configurations/");
 						configuration = ScriptableObject.CreateInstance<Configuration>();
 						AssetDatabase.CreateAsset(configuration, "Assets/NUXML/Framework/Configurations/Configuration.asset");
 						AssetDatabase.Refresh();

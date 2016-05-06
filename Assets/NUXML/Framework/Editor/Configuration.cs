@@ -60,13 +60,13 @@ namespace NUXML.Editor
 				if (_instance == null)
 				{
 					// attempt to load configuration asset
-					Configuration configuration = AssetDatabase.LoadAssetAtPath("Assets/NUXML/_Framework/Configurations/Configuration.asset", typeof(Configuration)) as Configuration;
+					Configuration configuration = AssetDatabase.LoadAssetAtPath("Assets/NUXML/Framework/Configurations/Configuration.asset", typeof(Configuration)) as Configuration;
 					if (configuration == null)
 					{
 						// create new asset                        
 						System.IO.Directory.CreateDirectory("Assets/NUXML/_Framework/Configurations/");
 						configuration = ScriptableObject.CreateInstance<Configuration>();
-						AssetDatabase.CreateAsset(configuration, "Assets/NUXML/_Framework/Configurations/Configuration.asset");
+						AssetDatabase.CreateAsset(configuration, "Assets/NUXML/Framework/Configurations/Configuration.asset");
 						AssetDatabase.Refresh();
 					}
 
@@ -90,7 +90,7 @@ namespace NUXML.Editor
 								!viewPath.EndsWith("/"))
 							{
 								Debug.LogError("Invalid view path in configuration. The path must start with 'Assets/' and end with '/'. Using default configuration.");
-								Debug.LogError("This sometimes happens if Unity hasn't converted the configuration asset to correct serialization mode. To fix go to [Edit -> Project settings -> Editor] and change Asset Serialization Mode to another mode and back to the desired mode. If you inspect the Configuration asset at MarkUX/Configuration/Configuration.asset the values should be in plain text and the view paths should look like file path strings (not a bunch of numbers).");
+								Debug.LogError("This sometimes happens if Unity hasn't converted the configuration asset to correct serialization mode. To fix go to [Edit -> Project settings -> Editor] and change Asset Serialization Mode to another mode and back to the desired mode. If you inspect the Configuration asset at /Configuration/Configuration.asset the values should be in plain text and the view paths should look like file path strings (not a bunch of numbers).");
 
 								configuration = ScriptableObject.CreateInstance<Configuration>();
 								break;

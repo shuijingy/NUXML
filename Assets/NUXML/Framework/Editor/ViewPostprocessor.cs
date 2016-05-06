@@ -12,9 +12,11 @@ using System.Text.RegularExpressions;
 
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.EventSystems;
 
 using NUXML;
-using UnityEngine.EventSystems;
+using NUXML.ValueConverters;
+using NUXML.Views;
 
 #endregion
 
@@ -133,7 +135,7 @@ namespace NUXML.Editor
 				}
 				catch (Exception e)
 				{
-					Debug.LogError(String.Format("[MarkUX.329] {0}: Error parsing view asset. Exception thrown: {1}.", viewAsset.name, e.Message));
+					Debug.LogError(String.Format("[.329] {0}: Error parsing view asset. Exception thrown: {1}.", viewAsset.name, e.Message));
 					return;
 				}
 
@@ -187,7 +189,7 @@ namespace NUXML.Editor
 					}
 					catch (Exception e)
 					{
-						Debug.LogError(String.Format("[MarkUX.330] Error parsing embedded XML in view \"{0}\". Exception thrown: {1}", viewType.Name, e.Message));
+						Debug.LogError(String.Format("[.330] Error parsing embedded XML in view \"{0}\". Exception thrown: {1}", viewType.Name, e.Message));
 						GameObject.DestroyImmediate(temporaryViewComponent);
 						return;
 					}
@@ -212,7 +214,7 @@ namespace NUXML.Editor
 					}
 					catch
 					{
-						Debug.LogError(String.Format("[MarkUX.331] {0}: The view \"{1}\" could not be found.", viewElement.AssetName, dependencyName));
+						Debug.LogError(String.Format("[.331] {0}: The view \"{1}\" could not be found.", viewElement.AssetName, dependencyName));
 						return;
 					}
 				}
@@ -225,7 +227,7 @@ namespace NUXML.Editor
 			}
 			catch (Exception e)
 			{
-				Debug.LogError(String.Format("[MarkUX.332] Unable to parse views. {0}", e.Message));
+				Debug.LogError(String.Format("[.332] Unable to parse views. {0}", e.Message));
 				return;
 			}
 
@@ -241,7 +243,7 @@ namespace NUXML.Editor
 												  themeElements);
 			}
 
-			Debug.Log("[MarkUX] Views processed. " + DateTime.Now.ToString());
+			Debug.Log("[] Views processed. " + DateTime.Now.ToString());
 		}
 
 		/// <summary>
@@ -312,12 +314,12 @@ namespace NUXML.Editor
 			{
 				if (String.IsNullOrEmpty(viewPresenter.MainView))
 				{
-					Debug.LogWarning(String.Format("[MarkUX.352] Main view not selected. No view is rendered by the view presenter."));
+					Debug.LogWarning(String.Format("[.352] Main view not selected. No view is rendered by the view presenter."));
 					return;
 				}
 				else
 				{
-					Debug.LogError(String.Format("[MarkUX.335] Unable to find main view \"{0}\".", viewPresenter.MainView));
+					Debug.LogError(String.Format("[.335] Unable to find main view \"{0}\".", viewPresenter.MainView));
 					return;
 				}
 			}
@@ -332,7 +334,7 @@ namespace NUXML.Editor
 			}
 			catch (Exception e)
 			{
-				Debug.LogError(String.Format("[MarkUX.336] Unable to initialize views. Exception thrown: \"{0}\". {1}", e.Message, e.StackTrace));
+				Debug.LogError(String.Format("[.336] Unable to initialize views. Exception thrown: \"{0}\". {1}", e.Message, e.StackTrace));
 				return;
 			}
 
@@ -384,7 +386,17 @@ namespace NUXML.Editor
 		/// <summary>
 		/// Creates a game object for a view.
 		/// </summary>
-		private static View CreateViewGameObject(ViewPresenter viewPresenter, ViewElement viewElement, List<ViewElement> viewElements, List<ThemeElement> themeElements, GameObject layoutParent, List<ValueConverter> valueConverters, Dictionary<Type, List<FieldChangeHandler>> viewFieldChangeHandlers, IEnumerable<XElement> content, GameObject contentParent, string viewId, string viewStyle)
+		private static View CreateViewGameObject(ViewPresenter viewPresenter, 
+												 ViewElement   viewElement, 
+			                                     List<ViewElement> viewElements, 
+			                                     List<ThemeElement> themeElements, 
+			                                     GameObject layoutParent,
+			                                     List<ValueConverter> valueConverters, 
+			                                     Dictionary<Type, List<FieldChangeHandler>> viewFieldChangeHandlers, 
+			                                     IEnumerable<XElement> content, 
+			                                     GameObject contentParent, 
+			                                     string viewId, 
+			                                     string viewStyle)
 		{
 			// Parses the views in the following order:
 			// ParseView(view)
@@ -434,13 +446,13 @@ namespace NUXML.Editor
 
 			if (contentParent != null)
 			{
-				view.Parent = contentParent;
+				view.Parent     = contentParent;
 				view.ParentView = contentParent.GetComponent<View>();
 			}
 
-			view.RootCanvas = viewPresenter.gameObject;
-			view.LayoutParent = layoutParent;
-			view.LayoutParentView = layoutParent.GetComponent<View>();
+			view.RootCanvas          = viewPresenter.gameObject;
+			view.LayoutParent        = layoutParent;
+			view.LayoutParentView    = layoutParent.GetComponent<View>();
 			view.ParentViewPresenter = viewPresenter;
 
 			// does this view create other views?            
@@ -455,7 +467,7 @@ namespace NUXML.Editor
 				var templateViewElement = viewElements.FirstOrDefault(e => e.ViewType == createsView.Type);
 				if (templateViewElement == null)
 				{
-					Debug.LogError(String.Format("[MarkUX.333] CreateView attribute on view \"{0}\" references a view template of type \"{1}\" that could not be found.", templateViewElement.ViewType.Name, createsView.Type.Name));
+					Debug.LogError(String.Format("[.333] CreateView attribute on view \"{0}\" references a view template of type \"{1}\" that could not be found.", templateViewElement.ViewType.Name, createsView.Type.Name));
 					continue;
 				}
 
@@ -576,7 +588,7 @@ namespace NUXML.Editor
 				}
 				else
 				{
-					Debug.LogError(String.Format("[MarkUX.337] {0}: Content assigned to view that isn't a content view (does not inherit from ContentView).", viewElement.AssetName));
+					Debug.LogError(String.Format("[.337] {0}: Content assigned to view that isn't a content view (does not inherit from ContentView).", viewElement.AssetName));
 				}
 			}
 
@@ -704,7 +716,7 @@ namespace NUXML.Editor
 				var type = viewTypes.FirstOrDefault(t => String.Equals(t.Name, childElement.Name.LocalName, StringComparison.OrdinalIgnoreCase));
 				if (type == null)
 				{
-					Debug.LogError(String.Format("[MarkUX.338] {0}: unable to find view type \"{1}\".", assetName, childElement.Name.LocalName));
+					Debug.LogError(String.Format("[.338] {0}: unable to find view type \"{1}\".", assetName, childElement.Name.LocalName));
 					continue;
 				}
 				themeElement.ViewType = type;
@@ -727,7 +739,7 @@ namespace NUXML.Editor
 						var parentViewType = viewTypes.FirstOrDefault(t => String.Equals(t.Name, attribute.Value, StringComparison.OrdinalIgnoreCase));
 						if (parentViewType == null)
 						{
-							Debug.LogError(String.Format("[MarkUX.339] {0}: {1}: unable to find parent view type \"{2}\".", assetName, childElement.Name.LocalName, attribute.Value));
+							Debug.LogError(String.Format("[.339] {0}: {1}: unable to find parent view type \"{2}\".", assetName, childElement.Name.LocalName, attribute.Value));
 							isInvalidThemeElement = true;
 							break;
 						}
@@ -775,7 +787,7 @@ namespace NUXML.Editor
 			FieldInfo fieldInfo = view.GetType().GetField(attributeName);
 			if (fieldInfo == null)
 			{
-				Debug.LogError(String.Format("[MarkUX.340] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Field missing.", view.Name, attributeValue, view.GetType().Name, attributeName));
+				Debug.LogError(String.Format("[.340] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Field missing.", view.Name, attributeValue, view.GetType().Name, attributeName));
 				return;
 			}
 
@@ -783,7 +795,7 @@ namespace NUXML.Editor
 			bool notAllowed = fieldInfo.GetCustomAttributes(typeof(NotSetFromXml), true).Any();
 			if (notAllowed)
 			{
-				Debug.LogError(String.Format("[MarkUX.341] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Field not allowed to be set from xml.", view.Name, attributeValue, view.GetType().Name, attributeName));
+				Debug.LogError(String.Format("[.341] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Field not allowed to be set from xml.", view.Name, attributeValue, view.GetType().Name, attributeName));
 				return;
 			}
 
@@ -834,7 +846,7 @@ namespace NUXML.Editor
 
 							if (asset == null)
 							{
-								Debug.LogError(String.Format("[MarkUX.342] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Asset not found at path.", view.Name, attributeValue, view.GetType().Name, attributeName));
+								Debug.LogError(String.Format("[.342] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Asset not found at path.", view.Name, attributeValue, view.GetType().Name, attributeName));
 								return;
 							}
 
@@ -851,7 +863,7 @@ namespace NUXML.Editor
 							asset = AssetDatabase.LoadAssetAtPath(assetPath, valueConverter.Type);
 							if (asset == null)
 							{
-								Debug.LogError(String.Format("[MarkUX.342] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Asset not found at path.", view.Name, attributeValue, view.GetType().Name, attributeName));
+								Debug.LogError(String.Format("[.342] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Asset not found at path.", view.Name, attributeValue, view.GetType().Name, attributeName));
 								return;
 							}
 
@@ -860,7 +872,7 @@ namespace NUXML.Editor
 					}
 					catch (Exception e)
 					{
-						Debug.LogError(String.Format("[MarkUX.343] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Exception thrown: {4}", view.Name, attributeValue, view.GetType().Name, attributeName, e.Message));
+						Debug.LogError(String.Format("[.343] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. Exception thrown: {4}", view.Name, attributeValue, view.GetType().Name, attributeName, e.Message));
 						return;
 					}
 				}
@@ -869,7 +881,7 @@ namespace NUXML.Editor
 					ConversionResult result = valueConverter.Convert(attributeValue, new ValueConverterContext { BaseDirectory = baseDirectory });
 					if (!result.Success)
 					{
-						Debug.LogError(String.Format("[MarkUX.344] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. {4}", view.Name, attributeValue, view.GetType().Name, attributeName, result.ErrorMessage));
+						Debug.LogError(String.Format("[.344] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value conversion failed. {4}", view.Name, attributeValue, view.GetType().Name, attributeName, result.ErrorMessage));
 						return;
 					}
 					value = result.ConvertedObject;
@@ -881,7 +893,7 @@ namespace NUXML.Editor
 			}
 			else
 			{
-				Debug.LogError(String.Format("[MarkUX.345] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value converter missing.", view.Name, attributeValue, view.GetType().Name, attributeName));
+				Debug.LogError(String.Format("[.345] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Value converter missing.", view.Name, attributeValue, view.GetType().Name, attributeName));
 			}
 		}
 
@@ -912,7 +924,7 @@ namespace NUXML.Editor
 			else if (matches.Count > 1)
 			{
 				// multiple bindings found
-				Debug.LogError(String.Format("[MarkUX.346] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Multibindings are currently not supported.", view.Name, attributeValue, view.GetType().Name, attributeName));
+				Debug.LogError(String.Format("[.346] {0}: Unable to assign value \"{1}\" to view field \"{2}.{3}\". Multibindings are currently not supported.", view.Name, attributeValue, view.GetType().Name, attributeName));
 				return false;
 			}
 			else

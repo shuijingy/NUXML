@@ -155,13 +155,13 @@ namespace NUXML
         public View()
         {
             Alignment = Alignment.Center;
-            Width = new ElementSize(1.0f, ElementSizeUnit.Percents);
+            Width  = new ElementSize(1.0f, ElementSizeUnit.Percents);
             Height = new ElementSize(1.0f, ElementSizeUnit.Percents);
             Margin = new Margin();
             Offset = new Margin();
-            BackgroundColor = Color.clear;
+            BackgroundColor     = Color.clear;
             BackgroundImageType = UnityEngine.UI.Image.Type.Simple;
-            Enabled = true;
+            Enabled     = true;
             ViewActions = new List<ViewAction>();
             OffsetFromParent = new Margin();
             UpdateRectTransform = true;
@@ -170,7 +170,7 @@ namespace NUXML
             FieldChangeHandlers = new List<FieldChangeHandler>();
             HideFlags = HideFlags.None;
             Pivot = new Vector2(0.5f, 0.5f);
-            BackgroundImage = null;
+            BackgroundImage    = null;
             BackgroundMaterial = null;
             SortIndex = 0;
             AlwaysBlockRaycast = false;
@@ -485,7 +485,7 @@ namespace NUXML
         /// </summary>
         public virtual void UpdateLayout()
         {
-            //Debug.Log(String.Format("{0}.UpdateLayout called", Name));
+            Debug.Log(String.Format("{0}.UpdateLayout called", Name));
 
             if (UpdateRectTransform)
             {
@@ -578,7 +578,7 @@ namespace NUXML
         /// </summary>
         public virtual void UpdateBehavior()
         {
-            //Debug.Log(String.Format("{0}.UpdateBehavior called", Name));
+            Debug.Log(String.Format("{0}.UpdateBehavior called", Name));
 
             gameObject.hideFlags = HideFlags;
 
@@ -730,7 +730,7 @@ namespace NUXML
                 // call changed field handlers
                 foreach (var triggeredHandler in _triggeredChangeHandlers.Values)
                 {
-                    //Debug.Log(String.Format("Triggered change handler \"{0}.{1}\".", Name, triggeredHandler.Name));
+                    Debug.Log(String.Format("Triggered change handler \"{0}.{1}\".", Name, triggeredHandler.Name));
                     triggeredHandler.Invoke(this, null);
                 }
 
@@ -790,7 +790,7 @@ namespace NUXML
                     foreach (var viewAction in ViewActions.Where(a => a.TriggeredByEventSystem))
                     {
                         var entry = new EventTrigger.Entry();
-                        entry.eventID = viewAction.EventTriggerType;
+                        entry.eventID  = viewAction.EventTriggerType;
                         entry.callback = new EventTrigger.TriggerEvent();
 
                         var eventViewAction = viewAction;

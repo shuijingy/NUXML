@@ -23,9 +23,9 @@ namespace NUXML
     {
         #region Fields
 
-        private static Dictionary<Type, Type> _typeValueInterpolators;
+        private static Dictionary<Type, Type>           _typeValueInterpolators;
         private static Dictionary<Type, ValueConverter> _typeValueConverters;
-        private static bool _isInitialized = false;
+        private static bool  _isInitialized = false;
         private static float _elementSize;        
 
         public static float ElementSize
@@ -53,7 +53,7 @@ namespace NUXML
             _isInitialized = true;
 
             _elementSize = elementSize;
-            _typeValueConverters = new Dictionary<Type, ValueConverter>();
+            _typeValueConverters    = new Dictionary<Type, ValueConverter>();
             _typeValueInterpolators = new Dictionary<Type, Type>();
 
             // map types to value interpolators

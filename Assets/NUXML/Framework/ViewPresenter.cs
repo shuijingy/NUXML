@@ -113,7 +113,11 @@ namespace NUXML
 		/// </summary>
 		public void InitializeViews()
 		{
-			gameObject.ForEachChild<View>(x => { x.InitializeInternal(); x.Initialize(); });
+			gameObject.ForEachChild<View>(x => 
+			{ 
+				x.InitializeInternal(); //Event Trigger
+				x.Initialize();         //Dummy
+			});
 		}
 
 		/// <summary>

@@ -67,6 +67,8 @@ namespace NUXML.Editor
 		/// </summary>
 		public static void ProcessViewAssets()
 		{
+			Debug.Log(" --> ProcessViewAssets");
+
 			// don't process assets while playing
 			if (Application.isPlaying)
 			{
@@ -96,6 +98,8 @@ namespace NUXML.Editor
 			var viewFieldChangeHandlers = new Dictionary<Type, List<FieldChangeHandler>>();
 			foreach (var viewType in viewTypes)
 			{
+				Debug.Log("--> viewType: " + viewType.Name);
+
 				// look for methods ending in "HasChanged"
 				var fieldChangeHandlers = new List<FieldChangeHandler>();
 				var methods = viewType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -1071,6 +1075,7 @@ namespace NUXML.Editor
 			foreach (var path in Configuration.Instance.ViewPaths)
 			{
 				string localPath = path.StartsWith("Assets/") ? path.Substring(7) : path;
+				Debug.Log("--> localPath:" + localPath);
 				foreach (var asset in GetAssetsAtPath<TextAsset>(localPath))
 				{
 					viewAssets.Add(asset);

@@ -1,0 +1,6 @@
+<Theme Name="Basic">
+  <Button BackgroundColor="Gray80" HighlightedColor="Gray90" PressedColor="Gold" />
+  <Frame  Style="Window" BackgroundColor="Gray80" />
+</Theme>
+
+

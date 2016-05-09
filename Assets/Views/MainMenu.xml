@@ -1,0 +1,7 @@
+<MainMenu>
+    <Group Spacing="10px">
+        <Button Text="Play" />
+        <Button Text="Options" />
+        <Button Text="Quit" />
+    </Group>
+</MainMenu>

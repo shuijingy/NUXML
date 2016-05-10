@@ -39,36 +39,36 @@ namespace NUXML.Views
         public bool CanToggleOff;
 
         // button label
-        public string Text;
-        public Margin TextMargin;
-        public Font Font;
+        public string    Text;
+        public Margin    TextMargin;
+        public Font      Font;
         public FontStyle FontStyle;
-        public int FontSize;
-        public Color FontColor;
+        public int       FontSize;
+        public Color     FontColor;
         public Alignment TextAlignment;
-        public Color ShadowColor;
-        public Vector2 ShadowDistance;
-        public Color OutlineColor;
-        public Vector2 OutlineDistance;
+        public Color     ShadowColor;
+        public Vector2   ShadowDistance;
+        public Color     OutlineColor;
+        public Vector2   OutlineDistance;
 
         // animation
         // color tint animation
         [ChangeHandler("UpdateBehavior")]
         public Color HighlightedColor;
-        public bool HighlightedColorSet;
+        public bool  HighlightedColorSet;
 
         [ChangeHandler("UpdateBehavior")]
         public Color PressedColor;
-        public bool PressedColorSet;
+        public bool  PressedColorSet;
 
         [ChangeHandler("UpdateBehavior")]
         public Color DisabledColor;
-        public bool DisabledColorSet;
+        public bool  DisabledColorSet;
 
         // sprite swap animation
         [ChangeHandler("UpdateBehavior")]
         public Sprite HighlightedImage;
-        public bool HighlightedImageSet;
+        public bool   HighlightedImageSet;
 
         [ChangeHandler("UpdateBehavior")]
         public Sprite PressedImage;
@@ -76,7 +76,7 @@ namespace NUXML.Views
 
         [ChangeHandler("UpdateBehavior")]
         public Sprite DisabledImage;
-        public bool DisabledImageSet;
+        public bool   DisabledImageSet;
 
         public ViewAnimation HighlightImageAnimation;
         public ViewAnimation PressedImageAnimation;
@@ -281,6 +281,7 @@ namespace NUXML.Views
         /// </summary>
         public override string GetEmbeddedXml()
         {
+			Debug.Log("---> Button->GetEmbeddedXml()");
             return
                 @"<Button Width=""4em"" Height=""1em"" Click=""ButtonMouseClick"" MouseEnter=""ButtonMouseEnter"" MouseExit=""ButtonMouseExit"" MouseDown=""ButtonMouseDown"" MouseUp=""ButtonMouseUp"">
                     <Label Text=""{Text}"" Margin=""{TextMargin}"" Font=""{Font}"" FontStyle=""{FontStyle}"" FontSize=""{FontSize}"" FontColor=""{FontColor}"" TextAlignment=""{TextAlignment}"" Width=""100%"" Height=""100%"" ShadowColor=""{ShadowColor}"" ShadowDistance=""{ShadowDistance}"" OutlineColor=""{OutlineColor}"" OutlineDistance=""{OutlineDistance}"" />

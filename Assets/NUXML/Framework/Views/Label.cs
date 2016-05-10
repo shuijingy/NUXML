@@ -141,6 +141,8 @@ namespace NUXML.Views
                 return String.Empty;
             }
 
+			Debug.Log("---> ParseText: " + Text);
+
             var textComponent = GetComponent<Text>();
             string formattedText = string.Empty;
             string separatorString = "&sp;";

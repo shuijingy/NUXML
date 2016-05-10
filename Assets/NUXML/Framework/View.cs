@@ -427,6 +427,9 @@ namespace NUXML
         {
             // get field data from expression string
             string expressionString = field.ToString();
+
+			Debug.Log("--> expressionString: " + expressionString);
+
             if (!_viewFieldData.ContainsKey(expressionString))
             {
                 var viewFieldPath = expressionString.Substring(expressionString.IndexOf(").") + 2);

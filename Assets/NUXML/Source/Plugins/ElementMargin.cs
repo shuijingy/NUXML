@@ -36,9 +36,9 @@ namespace NUXML
         /// </summary>
         public ElementMargin()
         {
-            _left = new ElementSize();
-            _top = new ElementSize();
-            _right = new ElementSize();
+            _left   = new ElementSize();
+            _top    = new ElementSize();
+            _right  = new ElementSize();
             _bottom = new ElementSize();
         }
 
@@ -47,9 +47,9 @@ namespace NUXML
         /// </summary>
         public ElementMargin(float left, float top, float right = 0, float bottom = 0)
         {
-            _left = new ElementSize(left, ElementSizeUnit.Pixels);
-            _top = new ElementSize(top, ElementSizeUnit.Pixels);
-            _right = new ElementSize(right, ElementSizeUnit.Pixels);
+            _left   = new ElementSize(left,   ElementSizeUnit.Pixels);
+            _top    = new ElementSize(top,    ElementSizeUnit.Pixels);
+            _right  = new ElementSize(right,  ElementSizeUnit.Pixels);
             _bottom = new ElementSize(bottom, ElementSizeUnit.Pixels);
         }
 
@@ -58,10 +58,10 @@ namespace NUXML
         /// </summary>
         public ElementMargin(float margin)
         {
-            _left = new ElementSize(margin, ElementSizeUnit.Pixels);
-            _top = new ElementSize(margin, ElementSizeUnit.Pixels);
-            _right = new ElementSize(margin, ElementSizeUnit.Pixels);
-            _bottom = new ElementSize(margin, ElementSizeUnit.Pixels);
+            _left   = new ElementSize(margin,   ElementSizeUnit.Pixels);
+            _top    = new ElementSize(margin,   ElementSizeUnit.Pixels);
+            _right  = new ElementSize(margin,   ElementSizeUnit.Pixels);
+            _bottom = new ElementSize(margin,   ElementSizeUnit.Pixels);
         }
 
         /// <summary>
@@ -69,9 +69,9 @@ namespace NUXML
         /// </summary>
         public ElementMargin(ElementSize margin)
         {
-            _left = margin;
-            _top = margin;
-            _right = margin;
+            _left   = margin;
+            _top    = margin;
+            _right  = margin;
             _bottom = margin;
         }
 

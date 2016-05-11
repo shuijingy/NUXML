@@ -9,7 +9,7 @@ using UnityEngine;
 namespace NUXML
 {
     /// <summary>
-    /// Converts view XML attribute to a view value.
+    /// Value converter for view fields.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public class ValueConverter : Attribute
@@ -17,6 +17,7 @@ namespace NUXML
         #region Fields
 
         protected Type _type;
+        protected Type _stringType;
 
         #endregion
 
@@ -28,6 +29,7 @@ namespace NUXML
         public ValueConverter()
         {
             _type = typeof(object);
+            _stringType = typeof(string);
         }
 
         #endregion
@@ -35,11 +37,38 @@ namespace NUXML
         #region Methods
 
         /// <summary>
-        /// Converts view XML attribute to a view value.
+        /// Converts value to view field value.
+        /// </summary>
+        public ConversionResult Convert(object value)
+        {
+            return Convert(value, ValueConverterContext.Default);
+        }
+
+        /// <summary>
+        /// Converts XUML attribute to a view value.
         /// </summary>
         public virtual ConversionResult Convert(object value, ValueConverterContext context)
         {
             return new ConversionResult(value);
+        }
+
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public virtual string ConvertToString(object value)
+        {
+            return String.Empty;
+        }
+
+        /// <summary>
+        /// Gets conversion failed result with formatted error message.
+        /// </summary>
+        protected ConversionResult ConversionFailed(object value, string reason)
+        {
+            var result = new ConversionResult();
+            result.Success = false;
+            result.ErrorMessage = String.Format("{0}: Unable to convert the value \"{1}\" to type: {2}. {3}", GetType().Name, value, _type.Name, reason);
+            return result;
         }
 
         /// <summary>
@@ -49,7 +78,7 @@ namespace NUXML
         {
             var result = new ConversionResult();
             result.Success = false;
-            result.ErrorMessage = String.Format("{0}: Unable to convert the value \"{1}\" to type: {2}. Exception thrown: {3}.", GetType().Name, value, _type.Name, e.Message);
+            result.ErrorMessage = String.Format("{0}: Unable to convert the value \"{1}\" to type: {2}. Exception thrown: {3}", GetType().Name, value, _type.Name, Utils.GetError(e));
             return result;
         }
 

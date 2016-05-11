@@ -9,32 +9,34 @@ using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using NUXML;
 #endregion
 
 namespace NUXML.Editor
 {
     /// <summary>
-    /// New menu items.
+    /// Menu item for creating views.
     /// </summary>
     public class MenuItems
     {
         #region Methods
 
-        [MenuItem("Assets/Create/[View]")]
-        
-		static void CreateViewMenuItem()
+        [MenuItem("Assets/Create/View")]
+        private static void CreateViewMenuItem()
         {
-            var    configuration = Configuration.Instance;
-            string path          = AssetDatabase.GetAssetPath(Selection.activeObject);
-            string comparePath   = path.EndsWith("/") ? path : path + "/";
+            var configuration = Configuration.Instance;
+            string path = AssetDatabase.GetAssetPath(Selection.activeObject);
+            string comparePath = path.EndsWith("/") ? path : path + "/";
 
-
-            // check if path is under the "Assets/Views/" folder
+            // check if path is under a views folder
             if (String.IsNullOrEmpty(path) || !configuration.ViewPaths.Any(x => comparePath.StartsWith(x, StringComparison.OrdinalIgnoreCase)))
             {
-                path = "Assets/Views";
-                System.IO.Directory.CreateDirectory("Assets/Views/");
+                // no. pick default folder 
+                path = configuration.ViewPaths.FirstOrDefault();
+                if (String.IsNullOrEmpty(path))
+                {
+                    Debug.LogError(String.Format("[NUXML] Unable to create view. No view folders are configured.", path));
+                }
+                System.IO.Directory.CreateDirectory(path);
             }
             else
             {
@@ -44,7 +46,7 @@ namespace NUXML.Editor
                     path = Path.GetDirectoryName(path);
                     if (!Directory.Exists(path))
                     {
-                        Debug.LogError(String.Format("Unable to create view at path \"{0}\". Directory not found.", path));
+                        Debug.LogError(String.Format("[NUXML] Unable to create view at path \"{0}\". Directory not found.", path));
                         return; 
                     }
                 }
@@ -52,7 +54,7 @@ namespace NUXML.Editor
 
             // create new view asset
             string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(path + "/NewView.xml");
-            File.WriteAllText(assetPathAndName, "<NewView>\n    <Label Text=\"My New View\" />\n</NewView>");
+            File.WriteAllText(assetPathAndName, "<NewView xmlns=\"NUXML\">\n</NewView>");
             AssetDatabase.Refresh();
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = AssetDatabase.LoadAssetAtPath(assetPathAndName, typeof(TextAsset));

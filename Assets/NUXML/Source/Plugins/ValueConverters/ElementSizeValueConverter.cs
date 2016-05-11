@@ -42,12 +42,17 @@ namespace NUXML.ValueConverters
                 return base.Convert(value, context);
             }
 
-            if (value.GetType() == typeof(string))
+            Type valueType = value.GetType();
+            if (valueType == _type)
+            {
+                return base.Convert(value, context);
+            }
+            else if (valueType == _stringType)
             {
                 var stringValue = (string)value;
                 try
                 {
-                    var convertedValue = ElementSize.Parse(stringValue);
+                    var convertedValue = ElementSize.Parse(stringValue, context.UnitSize);
                     return new ConversionResult(convertedValue);
                 }
                 catch (Exception e)
@@ -57,6 +62,15 @@ namespace NUXML.ValueConverters
             }
 
             return ConversionFailed(value);
+        }
+
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public override string ConvertToString(object value)
+        {
+            ElementSize elementSize = value as ElementSize;
+            return elementSize.ToString();
         }
 
         #endregion

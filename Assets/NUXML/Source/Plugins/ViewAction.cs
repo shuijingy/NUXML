@@ -11,28 +11,19 @@ using UnityEngine.EventSystems;
 namespace NUXML
 {
     /// <summary>
-    /// Provides separation between UI and view logic.
+    /// View action.
     /// </summary>
     [Serializable]
     public class ViewAction
     {
         #region Fields
 
-        [SerializeField]
-        string _name;
+        public string Name;
+        public bool TriggeredByEventSystem;
+        public EventTriggerType EventTriggerType;
+        public bool IsDisabled; 
 
-        [SerializeField]
-        GameObject _source;
-
-        [SerializeField]
-        List<ViewActionEntry> _entries;
-
-        [SerializeField]
-        bool _triggeredByEventSystem;
-
-        [SerializeField]
-        EventTriggerType _eventTriggerType;
-
+        private List<ViewActionEntry> _viewActionEntries;
         public static Dictionary<string, EventTriggerType> EventTriggerTypes;
 
         #endregion
@@ -40,45 +31,49 @@ namespace NUXML
         #region Constructor
 
         /// <summary>
+        /// Initializes a new instance of the class.
+        /// </summary>
+        public ViewAction(string name = "")
+        {
+            Name = name;
+            if (EventTriggerTypes.ContainsKey(Name))
+            {
+                TriggeredByEventSystem = true;
+                EventTriggerType = EventTriggerTypes[Name];
+            }
+
+            _viewActionEntries = new List<ViewActionEntry>();
+        }
+
+        /// <summary>
         /// Initializes static instance of the class.
         /// </summary>
         static ViewAction()
         {
             EventTriggerTypes = new Dictionary<string, EventTriggerType>();
-            EventTriggerTypes.Add("BeginDrag",      EventTriggerType.BeginDrag);
-            EventTriggerTypes.Add("Cancel",         EventTriggerType.Cancel);
-            EventTriggerTypes.Add("Deselect",       EventTriggerType.Deselect);            
-            EventTriggerTypes.Add("Drag",           EventTriggerType.Drag);
-            EventTriggerTypes.Add("Drop",           EventTriggerType.Drop);
-            EventTriggerTypes.Add("EndDrag",        EventTriggerType.EndDrag);
-            EventTriggerTypes.Add("InitializePotentialDrag", EventTriggerType.InitializePotentialDrag);            
-            EventTriggerTypes.Add("Move",           EventTriggerType.Move);            
-            EventTriggerTypes.Add("Click",          EventTriggerType.PointerClick);
-            EventTriggerTypes.Add("PointerClick",   EventTriggerType.PointerClick);
-            EventTriggerTypes.Add("MouseClick",     EventTriggerType.PointerClick);            
-            EventTriggerTypes.Add("PointerDown",    EventTriggerType.PointerDown);
-            EventTriggerTypes.Add("MouseDown",      EventTriggerType.PointerDown);
-            EventTriggerTypes.Add("PointerEnter",   EventTriggerType.PointerEnter);
-            EventTriggerTypes.Add("MouseEnter",     EventTriggerType.PointerEnter);
-            EventTriggerTypes.Add("PointerExit",    EventTriggerType.PointerExit);
-            EventTriggerTypes.Add("MouseExit",      EventTriggerType.PointerExit);
-            EventTriggerTypes.Add("PointerUp",      EventTriggerType.PointerUp);
-            EventTriggerTypes.Add("MouseUp",        EventTriggerType.PointerUp);
-            EventTriggerTypes.Add("Scroll",         EventTriggerType.Scroll);
-            EventTriggerTypes.Add("Select",         EventTriggerType.Select);
-            EventTriggerTypes.Add("Submit",         EventTriggerType.Submit);
+            EventTriggerTypes.Add("BeginDrag", EventTriggerType.BeginDrag);
+            EventTriggerTypes.Add("Cancel", EventTriggerType.Cancel);
+            EventTriggerTypes.Add("Deselect", EventTriggerType.Deselect);
+            EventTriggerTypes.Add("Drag", EventTriggerType.Drag);
+            EventTriggerTypes.Add("Drop", EventTriggerType.Drop);
+            EventTriggerTypes.Add("EndDrag", EventTriggerType.EndDrag);
+            EventTriggerTypes.Add("InitializePotentialDrag", EventTriggerType.InitializePotentialDrag);
+            EventTriggerTypes.Add("Move", EventTriggerType.Move);
+            EventTriggerTypes.Add("Click", EventTriggerType.PointerClick);
+            EventTriggerTypes.Add("PointerClick", EventTriggerType.PointerClick);
+            EventTriggerTypes.Add("MouseClick", EventTriggerType.PointerClick);
+            EventTriggerTypes.Add("PointerDown", EventTriggerType.PointerDown);
+            EventTriggerTypes.Add("MouseDown", EventTriggerType.PointerDown);
+            EventTriggerTypes.Add("PointerEnter", EventTriggerType.PointerEnter);
+            EventTriggerTypes.Add("MouseEnter", EventTriggerType.PointerEnter);
+            EventTriggerTypes.Add("PointerExit", EventTriggerType.PointerExit);
+            EventTriggerTypes.Add("MouseExit", EventTriggerType.PointerExit);
+            EventTriggerTypes.Add("PointerUp", EventTriggerType.PointerUp);
+            EventTriggerTypes.Add("MouseUp", EventTriggerType.PointerUp);
+            EventTriggerTypes.Add("Scroll", EventTriggerType.Scroll);
+            EventTriggerTypes.Add("Select", EventTriggerType.Select);
+            EventTriggerTypes.Add("Submit", EventTriggerType.Submit);
             EventTriggerTypes.Add("UpdateSelected", EventTriggerType.UpdateSelected);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the class.
-        /// </summary>
-        public ViewAction(GameObject viewObject = null, string name = "")
-        {
-            _name    = name;
-            _source  = viewObject;
-            _entries = new List<ViewActionEntry>();
-            _triggeredByEventSystem = false;
         }
 
         #endregion
@@ -86,31 +81,106 @@ namespace NUXML
         #region Methods
 
         /// <summary>
-        /// Triggers the view action with base event data.
+        /// Triggers the view action with no data.
         /// </summary>
-        public void Trigger(BaseEventData eventData = null)
+        public void Trigger()
         {
-            Debug.Log(String.Format("Triggered action \"{0}.{1}\".", _source.name, _name));
+            if (IsDisabled)
+                return;
 
             // go through the entries and call them
-            foreach (var entry in _entries)
+            if (_viewActionEntries != null)
             {
-                entry.Invoke(_source, eventData, null);
+                foreach (var entry in _viewActionEntries)
+                {
+                    entry.Invoke();
+                }
             }
         }
 
         /// <summary>
         /// Triggers the view action with action data.
         /// </summary>
-		public void Trigger(ActionData actionData)
+        public void Trigger(ActionData actionData)
         {
-            Debug.Log(String.Format("Triggered action \"{0}.{1}\".", _source.name, _name));
+            if (IsDisabled)
+                return;
 
             // go through the entries and call them
-            foreach (var entry in _entries)
+            if (_viewActionEntries != null)
             {
-                entry.Invoke(_source, null, actionData);
+                foreach (var entry in _viewActionEntries)
+                {
+                    entry.Invoke(actionData);
+                }
             }
+        }
+
+        /// <summary>
+        /// Triggers the view action with event data.
+        /// </summary>
+        public void Trigger(BaseEventData baseEventData)
+        {
+            if (IsDisabled)
+                return;
+
+            // go through the entries and call them
+            if (_viewActionEntries != null)
+            {
+                foreach (var entry in _viewActionEntries)
+                {
+                    entry.Invoke(baseEventData);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Triggers the view action custom data.
+        /// </summary>
+        public void Trigger(object customData)
+        {
+            if (IsDisabled)
+                return;
+
+            // go through the entries and call them
+            if (_viewActionEntries != null)
+            {
+                foreach (var entry in _viewActionEntries)
+                {
+                    entry.Invoke(customData);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Triggers the view action.
+        /// </summary>
+        public void Trigger(ActionData actionData, BaseEventData baseEventData, object customData)
+        {
+            if (IsDisabled)
+                return;
+
+            // go through the entries and call them
+            if (_viewActionEntries != null)
+            {
+                foreach (var entry in _viewActionEntries)
+                {
+                    entry.Invoke(actionData, baseEventData, customData);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds view action entry. 
+        /// </summary>
+        internal void AddEntry(ViewActionEntry viewActionEntry)
+        {
+            if (_viewActionEntries == null)
+            {
+                _viewActionEntries = new List<ViewActionEntry>();
+            }
+
+            _viewActionEntries.Add(viewActionEntry);
         }
 
         #endregion
@@ -118,48 +188,25 @@ namespace NUXML
         #region Properties
 
         /// <summary>
-        /// Gets or sets view action name.
+        /// Gets number of view action entries attached to this view action.
         /// </summary>
-        public string Name
+        public int Entries
         {
-            get { return _name; }
-            set { _name = value; }
+            get
+            {
+                return _viewActionEntries != null ? _viewActionEntries.Count : 0;
+            }
         }
 
         /// <summary>
-        /// Gets or sets view object that the action belongs to.
+        /// Gets boolean indicating if the view action has any entries attached to it. 
         /// </summary>
-        public GameObject ViewObject
+        public bool HasEntries
         {
-            get { return _source; }
-            set { _source = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets view action entries.
-        /// </summary>
-        public List<ViewActionEntry> Entries
-        {
-            get { return _entries; }
-            set { _entries = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets boolean indicating if action is triggered by the event system.
-        /// </summary>
-        public bool TriggeredByEventSystem
-        {
-            get { return _triggeredByEventSystem; }
-            set { _triggeredByEventSystem = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets type of event that triggers action by the event system.
-        /// </summary>
-        public EventTriggerType EventTriggerType
-        {
-            get { return _eventTriggerType; }
-            set { _eventTriggerType = value; }
+            get
+            {
+                return _viewActionEntries != null ? _viewActionEntries.Count > 0 : false;
+            }
         }
 
         #endregion

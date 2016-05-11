@@ -345,6 +345,7 @@ namespace NUXML.Animation
 
         /// <summary>
         /// Easing modeled after the damped sine wave y = Mathf.Sin(-13pi/2*(x + 1))*Mathf.Pow(2, -10x) + 1
+        /// </summary>
         public static float ElasticEaseOut(float p)
         {
             return Mathf.Sin(-13 * (Mathf.PI / 2f) * (p + 1)) * Mathf.Pow(2, -10 * p) + 1;

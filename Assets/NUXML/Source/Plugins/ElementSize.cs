@@ -41,6 +41,15 @@ namespace NUXML
         /// <summary>
         /// Initializes a new instance of the class.
         /// </summary>
+        public ElementSize(float pixels)
+        {
+            _value = pixels;
+            _unit = ElementSizeUnit.Pixels;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the class.
+        /// </summary>
         public ElementSize(float value, ElementSizeUnit unit)
         {
             _value = value;
@@ -64,47 +73,23 @@ namespace NUXML
         /// <summary>
         /// Gets element size with the specified pixel size.
         /// </summary>
-        public static ElementSize GetPixels(float pixels)
+        public static ElementSize FromPixels(float pixels)
         {
             return new ElementSize(pixels, ElementSizeUnit.Pixels);
         }
 
         /// <summary>
-        /// Gets element size with the specified element size.
+        /// Gets element size with the specified percent size (0.0 - 1.0).
         /// </summary>
-        public static ElementSize GetElements(float elements)
-        {
-            return new ElementSize(elements, ElementSizeUnit.Elements);
-        }
-
-        /// <summary>
-        /// Gets element size with the specified percent size.
-        /// </summary>
-        public static ElementSize GetPercents(float percents)
+        public static ElementSize FromPercents(float percents)
         {
             return new ElementSize(percents, ElementSizeUnit.Percents);
         }
 
         /// <summary>
-        /// Converts elements to pixels.
-        /// </summary>
-        public static float ElementsToPixels(float elements)
-        {                        
-            return ViewData.ElementSize * elements;
-        }
-
-        /// <summary>
-        /// Converts pixels to elements.
-        /// </summary>
-        public static float PixelsToElements(float pixels)
-        {
-            return pixels / ViewData.ElementSize;
-        }
-
-        /// <summary>
         /// Parses string into element size.
         /// </summary>
-        public static ElementSize Parse(string value)
+        public static ElementSize Parse(string value, Vector3 unitSize)
         {
             ElementSize elementSize = new ElementSize();
             string trimmedValue = value.Trim();
@@ -113,12 +98,6 @@ namespace NUXML
                 elementSize.Value = 1;
                 elementSize.Unit = ElementSizeUnit.Percents;
                 elementSize.Fill = true;
-            }
-            else if (trimmedValue.EndsWith("em", StringComparison.OrdinalIgnoreCase))
-            {
-                int lastIndex = trimmedValue.LastIndexOf("em", StringComparison.OrdinalIgnoreCase);
-                elementSize.Value = System.Convert.ToSingle(trimmedValue.Substring(0, lastIndex), CultureInfo.InvariantCulture);
-                elementSize.Unit = ElementSizeUnit.Elements;
             }
             else if (trimmedValue.EndsWith("%"))
             {
@@ -132,6 +111,24 @@ namespace NUXML
                 elementSize.Value = System.Convert.ToSingle(trimmedValue.Substring(0, lastIndex), CultureInfo.InvariantCulture);
                 elementSize.Unit = ElementSizeUnit.Pixels;
             }
+            else if (trimmedValue.EndsWith("ux"))
+            {
+                int lastIndex = trimmedValue.LastIndexOf("ux", StringComparison.OrdinalIgnoreCase);
+                elementSize.Value = System.Convert.ToSingle(trimmedValue.Substring(0, lastIndex), CultureInfo.InvariantCulture) * unitSize.x;
+                elementSize.Unit = ElementSizeUnit.Pixels;
+            }
+            else if (trimmedValue.EndsWith("uy"))
+            {
+                int lastIndex = trimmedValue.LastIndexOf("uy", StringComparison.OrdinalIgnoreCase);
+                elementSize.Value = System.Convert.ToSingle(trimmedValue.Substring(0, lastIndex), CultureInfo.InvariantCulture) * unitSize.y;
+                elementSize.Unit = ElementSizeUnit.Pixels;
+            }
+            else if (trimmedValue.EndsWith("uz"))
+            {
+                int lastIndex = trimmedValue.LastIndexOf("uz", StringComparison.OrdinalIgnoreCase);
+                elementSize.Value = System.Convert.ToSingle(trimmedValue.Substring(0, lastIndex), CultureInfo.InvariantCulture) * unitSize.z;
+                elementSize.Unit = ElementSizeUnit.Pixels;
+            }
             else
             {
                 elementSize.Value = System.Convert.ToSingle(trimmedValue, CultureInfo.InvariantCulture);
@@ -139,6 +136,21 @@ namespace NUXML
             }
 
             return elementSize;
+        }
+
+        /// <summary>
+        /// Converts element size to string.
+        /// </summary>
+        public override string ToString()
+        {
+            if (Unit == ElementSizeUnit.Percents)
+            {
+                return Value.ToString() + "%";
+            }
+            else
+            {
+                return Value.ToString();
+            }
         }
 
         #endregion
@@ -168,32 +180,6 @@ namespace NUXML
             get
             {
                 if (_unit == ElementSizeUnit.Pixels)
-                {
-                    return _value;
-                }
-                else if (_unit == ElementSizeUnit.Elements)
-                {
-                    return ElementsToPixels(_value);
-                }
-                else
-                {
-                    return 0f;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets element size in elements.
-        /// </summary>
-        public float Elements
-        {
-            get
-            {
-                if (_unit == ElementSizeUnit.Pixels)
-                {
-                    return PixelsToElements(_value);
-                }
-                else if (_unit == ElementSizeUnit.Elements)
                 {
                     return _value;
                 }

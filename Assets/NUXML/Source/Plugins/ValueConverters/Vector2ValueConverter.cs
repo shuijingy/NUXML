@@ -39,7 +39,12 @@ namespace NUXML.ValueConverters
                 return base.Convert(value, context);
             }
 
-            if (value.GetType() == typeof(string))
+            Type valueType = value.GetType();
+            if (valueType == _type)
+            {
+                return base.Convert(value, context);
+            }
+            else if (valueType == _stringType)
             {
                 var stringValue = (string)value;
                 float[] valueList;
@@ -67,6 +72,15 @@ namespace NUXML.ValueConverters
             }
 
             return ConversionFailed(value);
+        }
+
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public override string ConvertToString(object value)
+        {
+            Vector2 v = (Vector2)value;
+            return String.Format("{0},{1}", v.x, v.y);
         }
 
         #endregion

@@ -9,8 +9,14 @@ namespace NUXML
     /// </summary>
     public enum ElementSizeUnit
     {
-        Pixels   = 0,
-        Percents = 1,
-        Elements = 2
+        /// <summary>
+        /// Element size specified in pixels.
+        /// </summary>
+        Pixels = 0,
+
+        /// <summary>
+        /// Element size specified in percents.
+        /// </summary>
+        Percents = 1
     }
 }

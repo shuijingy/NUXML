@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine.UI;
 using UnityEngine;
+using System.Globalization;
 #endregion
 
 namespace NUXML.ValueConverters
 {
     /// <summary>
-    /// Value converter for Margin type.
+    /// Value converter for int type.
     /// </summary>
     public class MarginValueConverter : ValueConverter
     {
@@ -21,7 +22,7 @@ namespace NUXML.ValueConverters
         /// </summary>
         public MarginValueConverter()
         {
-            _type = typeof(Margin);
+            _type = typeof(ElementMargin);
         }
 
         #endregion
@@ -38,38 +39,43 @@ namespace NUXML.ValueConverters
                 return base.Convert(value, context);
             }
 
-            if (value.GetType() == typeof(string))
+            Type valueType = value.GetType();
+            if (valueType == _type)
+            {
+                return base.Convert(value, context);
+            }
+            else if (valueType == _stringType)
             {
                 var stringValue = (string)value;
                 try
                 {
                     string[] valueList;
                     valueList = stringValue.Split(',').ToArray();
-                    Margin convertedValue = null;
+                    ElementMargin convertedValue = null;
                     if (valueList.Length == 1)
                     {
-                        convertedValue = new Margin(ElementSize.Parse(valueList[0]));
+                        convertedValue = new ElementMargin(ElementSize.Parse(valueList[0], context.UnitSize));
                     }
                     else if (valueList.Length == 2)
                     {
-                        convertedValue = new Margin(
-                            ElementSize.Parse(valueList[0]),
-                            ElementSize.Parse(valueList[1]));
+                        convertedValue = new ElementMargin(
+                            ElementSize.Parse(valueList[0], context.UnitSize),
+                            ElementSize.Parse(valueList[1], context.UnitSize));
                     }
                     else if (valueList.Length == 3)
                     {
-                        convertedValue = new Margin(
-                            ElementSize.Parse(valueList[0]),
-                            ElementSize.Parse(valueList[1]),
-                            ElementSize.Parse(valueList[2]));
+                        convertedValue = new ElementMargin(
+                            ElementSize.Parse(valueList[0], context.UnitSize),
+                            ElementSize.Parse(valueList[1], context.UnitSize),
+                            ElementSize.Parse(valueList[2], context.UnitSize));
                     }
                     else if (valueList.Length == 4)
                     {
-                        convertedValue = new Margin(
-                            ElementSize.Parse(valueList[0]),
-                            ElementSize.Parse(valueList[1]),
-                            ElementSize.Parse(valueList[2]),
-                            ElementSize.Parse(valueList[3]));
+                        convertedValue = new ElementMargin(
+                            ElementSize.Parse(valueList[0], context.UnitSize),
+                            ElementSize.Parse(valueList[1], context.UnitSize),
+                            ElementSize.Parse(valueList[2], context.UnitSize),
+                            ElementSize.Parse(valueList[3], context.UnitSize));
                     }
                     else
                     {
@@ -83,8 +89,28 @@ namespace NUXML.ValueConverters
                     return ConversionFailed(value, e);
                 }
             }
+            else
+            {
+                // attempt to convert using system type converter
+                try
+                {
+                    var convertedValue = System.Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                    return new ConversionResult(convertedValue);
+                }
+                catch (Exception e)
+                {
+                    return ConversionFailed(value, e);
+                }
+            }
+        }
 
-            return ConversionFailed(value);
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public override string ConvertToString(object value)
+        {
+            ElementMargin margin = value as ElementMargin;
+            return margin.ToString();
         }
 
         #endregion

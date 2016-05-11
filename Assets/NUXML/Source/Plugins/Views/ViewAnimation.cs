@@ -15,13 +15,54 @@ namespace NUXML.Views
     /// <summary>
     /// Animates views.
     /// </summary>
-    [InternalView]
-    public class ViewAnimation : ContentView
+    /// <d>Animates views.</d>
+    [HideInPresenter]
+    public class ViewAnimation : View
     {
         #region Fields
 
-        [ChangeHandler("UpdateBehavior")]
-        public GameObject Target;
+        /// <summary>
+        /// Animation target view.
+        /// </summary>
+        /// <d>The animation target view.</d>
+        [ChangeHandler("BehaviorChanged")]
+        public View Target;
+
+        /// <summary>
+        /// Animation started.
+        /// </summary>
+        /// <d>Triggered when the animation has started.</d>
+        public ViewAction AnimationStarted;
+
+        /// <summary>
+        /// Animation reversed.
+        /// </summary>
+        /// <d>Triggered when the animation is reversed.</d>
+        public ViewAction AnimationReversed;
+
+        /// <summary>
+        /// Animation completed.
+        /// </summary>
+        /// <d>Triggered when the animation is completed.</d>
+        public ViewAction AnimationCompleted;
+
+        /// <summary>
+        /// Animation stopped.
+        /// </summary>
+        /// <d>Triggered when the animation is stopped.</d>
+        public ViewAction AnimationStopped;
+
+        /// <summary>
+        /// Animation paused.
+        /// </summary>
+        /// <d>Triggered when the animation has paused.</d>
+        public ViewAction AnimationPaused;
+
+        /// <summary>
+        /// Animation resumed.
+        /// </summary>
+        /// <d>Triggered when the animation resumes playing.</d>
+        public ViewAction AnimationResumed;
 
         #endregion
 
@@ -30,12 +71,12 @@ namespace NUXML.Views
         /// <summary>
         /// Gets a boolean indicating whether this animation is active.
         /// </summary>
-        public virtual bool IsAnimationActive
+        public virtual bool IsAnimationRunning
         {
             get
             {
                 bool isActive = false;
-                this.ForEachChild<ViewAnimation>(x => isActive = isActive || x.IsAnimationActive, false);
+                this.ForEachChild<ViewAnimation>(x => isActive = isActive || x.IsAnimationRunning, false);
                 return isActive;
             }
         }
@@ -60,7 +101,7 @@ namespace NUXML.Views
         {
             get
             {
-                bool isCompleted = false;
+                bool isCompleted = true;
                 this.ForEachChild<ViewAnimation>(x => isCompleted = isCompleted && x.IsAnimationCompleted, false);
                 return isCompleted;
             }
@@ -73,7 +114,7 @@ namespace NUXML.Views
         {
             get
             {
-                bool isPaused = false;
+                bool isPaused = true;
                 this.ForEachChild<ViewAnimation>(x => isPaused = isPaused && x.IsAnimationPaused, false);
                 return isPaused;
             }
@@ -81,20 +122,16 @@ namespace NUXML.Views
 
         #endregion
 
-        #region Constructor
+        #region Methods
 
         /// <summary>
-        /// Initializes a new instance of the class.
+        /// Sets default values of the view.
         /// </summary>
-        public ViewAnimation()
+        public override void SetDefaultValues()
         {
-            Enabled = false;
-            HideFlags = HideFlags.HideInHierarchy;
+            base.SetDefaultValues();
+            GameObject.hideFlags = UnityEngine.HideFlags.HideInHierarchy;
         }
-
-        #endregion
-
-        #region Methods
 
         /// <summary>
         /// Starts the animation.
@@ -102,6 +139,7 @@ namespace NUXML.Views
         public virtual void StartAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.StartAnimation(), false);
+            AnimationStarted.Trigger();
         }
 
         /// <summary>
@@ -110,6 +148,7 @@ namespace NUXML.Views
         public virtual void StopAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.StopAnimation(), false);
+            AnimationStopped.Trigger();
         }
 
         /// <summary>
@@ -117,7 +156,7 @@ namespace NUXML.Views
         /// </summary>
         public virtual void ResetAnimation()
         {
-            this.ForEachChild<ViewAnimation>(x => x.ResetAnimation(), false);
+            this.ForEachChild<ViewAnimation>(x => x.ResetAnimation(), false);            
         }
 
         /// <summary>
@@ -126,6 +165,7 @@ namespace NUXML.Views
         public virtual void ResetAndStopAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.ResetAndStopAnimation(), false);
+            AnimationStopped.Trigger();
         }
 
         /// <summary>
@@ -134,6 +174,7 @@ namespace NUXML.Views
         public virtual void ReverseAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.ReverseAnimation(), false);
+            AnimationReversed.Trigger();
         }
 
         /// <summary>
@@ -142,6 +183,7 @@ namespace NUXML.Views
         public virtual void PauseAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.PauseAnimation(), false);
+            AnimationPaused.Trigger();
         }
 
         /// <summary>
@@ -150,23 +192,26 @@ namespace NUXML.Views
         public virtual void ResumeAnimation()
         {
             this.ForEachChild<ViewAnimation>(x => x.ResumeAnimation(), false);
+            AnimationResumed.Trigger();
         }
 
         /// <summary>
         /// Sets animation target.
         /// </summary>
-        /// <param name="x"></param>
-        public virtual void SetAnimationTarget(GameObject go)
+        public virtual void SetAnimationTarget(View view)
         {
-            this.ForEachChild<ViewAnimation>(x => x.SetAnimationTarget(go), false);
+            this.ForEachChild<ViewAnimation>(x => x.SetAnimationTarget(view), false);
         }
 
         /// <summary>
-        /// Returns embedded XML for view.
+        /// Called if a child animation has been completed. 
         /// </summary>
-        public override string GetEmbeddedXml()
-        {
-            return @"<ViewAnimation />";
+        public virtual void ChildAnimationCompleted()
+        {            
+            if (IsAnimationCompleted)
+            {
+                AnimationCompleted.Trigger();
+            }
         }
 
         #endregion

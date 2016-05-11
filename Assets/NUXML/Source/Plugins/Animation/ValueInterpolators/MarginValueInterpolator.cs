@@ -28,7 +28,7 @@ namespace NUXML.Animation
         /// </summary>
         public MarginValueInterpolator()
         {
-            _type = typeof(Margin);
+            _type = typeof(ElementMargin);
             _elementSizeValueInterpolator = new ElementSizeValueInterpolator();
         }
 
@@ -41,12 +41,12 @@ namespace NUXML.Animation
         /// </summary>
         public override object Interpolate(object from, object to, float weight)
         {
-            Margin a = from as Margin;
-            Margin b = to as Margin;
+            ElementMargin a = from as ElementMargin;
+            ElementMargin b = to as ElementMargin;
             if (a == null || b == null)
                 return base.Interpolate(from, to, weight);
 
-            return new Margin(
+            return new ElementMargin(
                 _elementSizeValueInterpolator.Interpolate(a.Left, b.Left, weight) as ElementSize,
                 _elementSizeValueInterpolator.Interpolate(a.Top, b.Top, weight) as ElementSize,
                 _elementSizeValueInterpolator.Interpolate(a.Right, b.Right, weight) as ElementSize,

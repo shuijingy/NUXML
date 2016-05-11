@@ -4,44 +4,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using NUXML;
 #endregion
 
 namespace NUXML
 {
     /// <summary>
-    /// Contains information about method to be called when an action is triggered.
+    /// Contains data about a view action handler.
     /// </summary>
     [Serializable]
     public class ViewActionEntry
     {
         #region Fields
 
-        [SerializeField]
-        private string MethodName;
+        public string ViewActionFieldName;
+        public string ViewActionHandlerName;
+        public View ParentView;
+        public View SourceView;
 
-        [SerializeField]
-        public GameObject ViewObject;
-
-        private View _view;
-        private MethodInfo _viewActionMethod;
         private bool _initialized;
+        private MethodInfo _viewActionMethod;
 
-        #endregion
-
-        #region Constructor
-
-        /// <summary>
-        /// Initalizes a new instance of the class.
-        /// </summary>
-        public ViewActionEntry(string methodName, GameObject viewObject)
-        {
-            MethodName = methodName;
-            ViewObject = viewObject;
-            _initialized = false;
-        }
+        private object[] _parameters;
+        private bool _hasActionDataParameter;
+        private int _actionDataParameterIndex;
+        private bool _hasEventDataParemeter;
+        private int _eventDataParameterIndex;
+        private bool _hasCustomDataParameter;
+        private int _customDataParameterIndex;
 
         #endregion
 
@@ -50,91 +42,126 @@ namespace NUXML
         /// <summary>
         /// Invokes the view action method.
         /// </summary>
-		public void Invoke(GameObject source, BaseEventData eventData, ActionData actionData)
+        public void Invoke()
+        {
+            Invoke(null, null, null);
+        }
+
+        /// <summary>
+        /// Invokes the view action method with action data.
+        /// </summary>
+        public void Invoke(ActionData actionData)
+        {
+            Invoke(actionData, null, null);
+        }
+
+        /// <summary>
+        /// Invokes the view action method with base event data.
+        /// </summary>
+        public void Invoke(BaseEventData baseEventData)
+        {
+            Invoke(null, baseEventData, null);
+        }
+
+        /// <summary>
+        /// Invokes the view action method with custom event data.
+        /// </summary>
+        public void Invoke(object customData)
+        {
+            Invoke(null, null, customData);
+        }
+
+        /// <summary>
+        /// Invokes the view action method with parameters.
+        /// </summary>
+        internal void Invoke(ActionData actionData, BaseEventData baseEventData, object customData)
         {
             if (!_initialized)
             {
-                _initialized = true;
-                _view = ViewObject.GetComponent<View>();
+                Initialize();
 
-                // look for a method with the same name as the entry
-                _viewActionMethod = _view.GetType().GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (_viewActionMethod == null)
-                {
+                if (!_initialized)
                     return;
+            }
+
+            if (_hasActionDataParameter)
+            {
+                _parameters[_actionDataParameterIndex] = actionData;
+            }
+
+            if (_hasEventDataParemeter)
+            {
+                _parameters[_eventDataParameterIndex] = baseEventData;
+            }
+
+            if (_hasCustomDataParameter)
+            {
+                _parameters[_customDataParameterIndex] = customData;
+            }
+
+            // call action handler
+            try
+            {
+                _viewActionMethod.Invoke(ParentView, _parameters);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Exception thrown when triggering view action handler \"{1}.{2}()\" for view action \"{3}\": {4}", SourceView.GameObjectName, ParentView.ViewTypeName, ViewActionHandlerName, ViewActionFieldName, Utils.GetError(e)));
+            }
+        }
+
+        /// <summary>
+        /// Initializes the view action entry.
+        /// </summary>
+        private void Initialize()
+        {
+            // look for a method with the same name as the entry
+            _viewActionMethod = ParentView.GetType().GetMethod(ViewActionHandlerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (_viewActionMethod == null)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to initialize view action handler \"{1}.{2}()\" for view action \"{3}\". View action handler not found.", SourceView.GameObjectName, ParentView.ViewTypeName, ViewActionHandlerName, ViewActionFieldName));
+                return;
+            }
+
+            ParameterInfo[] viewActionMethodParameters = _viewActionMethod.GetParameters();
+            int parameterCount = viewActionMethodParameters.Length;
+
+            Type viewType = typeof(View);
+            Type actionDataType = typeof(ActionData);
+            Type baseEventDataType = typeof(BaseEventData);
+
+            _parameters = parameterCount > 0 ? new object[parameterCount] : null;
+            for (int i = 0; i < parameterCount; ++i)
+            {
+                if (viewType.IsAssignableFrom(viewActionMethodParameters[i].ParameterType))
+                {
+                    if (!viewActionMethodParameters[i].ParameterType.IsAssignableFrom(SourceView.GetType()))
+                    {
+                        Debug.LogError(String.Format("[NUXML] View action \"{0}.{1}\" has parameter \"{2}\" with invalid type. Expected type (or baseclass of) \"{3}\".", ParentView.ViewTypeName, ViewActionHandlerName, viewActionMethodParameters[i].Name, SourceView.ViewTypeName));
+                    }
+
+                    _parameters[i] = SourceView;
+                }
+                else if (actionDataType.IsAssignableFrom(viewActionMethodParameters[i].ParameterType))
+                {
+                    _hasActionDataParameter = true;
+                    _actionDataParameterIndex = i;
+                }
+                else if (baseEventDataType.IsAssignableFrom(viewActionMethodParameters[i].ParameterType))
+                {
+                    _hasEventDataParemeter = true;
+                    _eventDataParameterIndex = i;
+                }
+                else
+                {
+                    _hasCustomDataParameter = true;
+                    _customDataParameterIndex = i;
                 }
             }
 
-            if (_viewActionMethod != null)
-            {
-                //Debug.Log(String.Format("Invoking method \"{0}.{1}\".", _view.Name, _name));
-
-                // check set action parameters 
-                ParameterInfo[] parsInfo = _viewActionMethod.GetParameters();
-                object[] pars = parsInfo.Length > 0 ? new object[parsInfo.Length] : null;
-                for (int i = 0; i < parsInfo.Length; ++i)
-                {
-                    if (parsInfo[i].ParameterType == typeof(GameObject))
-                    {
-                        if (parsInfo[i].Name.IndexOf("parent", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            pars[i] = _view != null ? _view.gameObject : null;                            
-                        }
-                        else
-                        {
-                            pars[i] = source;
-                        }
-                    }
-                    else if (parsInfo[i].ParameterType.IsSubclassOf(typeof(View)) || parsInfo[i].ParameterType == typeof(View))
-                    {
-                        if (parsInfo[i].Name.IndexOf("parent", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            if (_view != null)
-                            {
-                                if(_view.GetType() != parsInfo[i].ParameterType &&
-                                    !_view.GetType().IsSubclassOf(parsInfo[i].ParameterType))
-                                {
-                                    Debug.LogError(String.Format("[.353] View action \"{0}.{1}\" has parameter \"{2}\" with invalid type. Expected type (or baseclass of) \"{3}\".", _view.Name, MethodName, parsInfo[i].Name, _view.GetType().Name));
-                                    return;
-                                }
-                            }
-
-                            pars[i] = _view;
-                        }
-                        else
-                        {
-                            var sourceView = source != null ? source.GetComponent<View>() : null;
-                            if (sourceView != null)
-                            {
-                                if (sourceView.GetType() != parsInfo[i].ParameterType &&
-                                    !sourceView.GetType().IsSubclassOf(parsInfo[i].ParameterType))
-                                {
-                                    Debug.LogError(String.Format("[.354] View action \"{0}.{1}\" has parameter \"{2}\" with invalid type. Expected type (or baseclass of) \"{3}\".", _view.Name, MethodName, parsInfo[i].Name, sourceView.GetType().Name));
-                                    return;
-                                }
-                            }
-
-                            pars[i] = source != null ? source.GetComponent<View>() : null;
-                        }
-                    }
-                    else if (parsInfo[i].ParameterType.IsSubclassOf(typeof(BaseEventData)) || parsInfo[i].ParameterType == typeof(BaseEventData))
-                    {
-                        pars[i] = eventData;
-                    }
-                    else if (parsInfo[i].ParameterType.IsSubclassOf(typeof(ActionData)) || parsInfo[i].ParameterType == typeof(ActionData))
-                    {
-                        pars[i] = actionData;
-                    }
-                    else
-                    {
-                        Debug.LogError(String.Format("[.311] View action \"{0}.{1}\" has parameter \"{2}\" with invalid type. Only GameObject or subtypes of View, ActionData and BaseEventData are allowed.", _view.Name, MethodName, parsInfo[i].Name));
-                        return;
-                    }
-                }                               
-
-                _viewActionMethod.Invoke(_view, pars);
-            }
+            _initialized = true;
         }
+
 
         #endregion
     }

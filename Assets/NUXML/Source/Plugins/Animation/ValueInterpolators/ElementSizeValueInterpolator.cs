@@ -53,7 +53,7 @@ namespace NUXML.Animation
                 }
             }
             
-            return new ElementSize(Lerp(a.Elements, b.Elements, weight), ElementSizeUnit.Elements);
+            return new ElementSize(Lerp(a.Pixels, b.Pixels, weight), ElementSizeUnit.Pixels);
         }
 
         #endregion

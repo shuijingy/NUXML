@@ -34,8 +34,8 @@ namespace NUXML.Animation
         /// </summary>
         public override object Interpolate(object from, object to, float weight)
         {
-            Color aRgb = (Color)from;
-            Color bRgb = (Color)to;
+            Color aRgb = from != null ? (Color)from : Color.black;
+            Color bRgb = to != null ? (Color)to : Color.black;
 
             // simple aRGB interpolation 
             Color result = new Color(

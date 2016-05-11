@@ -11,12 +11,15 @@ namespace NUXML
     /// <summary>
     /// Contains information about the context in which a value conversion occurs.
     /// </summary>
+    [Serializable]
     public class ValueConverterContext
     {
         #region Fields
 
-        private string _baseDirectory;
+        public string BaseDirectory;
+        public Vector2 UnitSize;
         public static ValueConverterContext Empty = new ValueConverterContext();
+        private static ValueConverterContext _defaultContext;
 
         #endregion
 
@@ -29,22 +32,37 @@ namespace NUXML
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the class.
+        /// </summary>
+        public ValueConverterContext(ValueConverterContext oldContext)
+        {
+            if (oldContext != null)
+            {
+                BaseDirectory = oldContext.BaseDirectory;
+                UnitSize = oldContext.UnitSize;
+            }
+        }
+
         #endregion
 
         #region Properties
 
         /// <summary>
-        /// Gets or sets base directory.
+        /// Gets default value converter context.
         /// </summary>
-        public string BaseDirectory
+        public static ValueConverterContext Default
         {
-            get 
+            get
             {
-                return _baseDirectory;
-            }
-            set
-            {
-                _baseDirectory = value;
+                if (_defaultContext == null)
+                {
+                    _defaultContext = new ValueConverterContext();
+                    _defaultContext.BaseDirectory = ViewPresenter.Instance.BaseDirectory;
+                    _defaultContext.UnitSize = ViewPresenter.Instance.UnitSize;
+                }
+
+                return _defaultContext;
             }
         }
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 #endregion
@@ -16,52 +17,21 @@ namespace NUXML
         #region Methods
 
         /// <summary>
-        /// Gets a list of children. 
+        /// Traverses the view object tree and performs an action on each child until the action returns false.
         /// </summary>
-        public static List<T> GetChildren<T>(this GameObject gameObject, bool recursive = true, View parent = null, SearchAlgorithm searchAlgorithm = SearchAlgorithm.DepthFirst) where T : View
+        public static void DoUntil<T>(this View view, Func<T, bool> action, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
-            return gameObject.GetChildren<T>(null, recursive, parent, searchAlgorithm);
-        }
-
-        /// <summary>
-        /// Gets a list of children. 
-        /// </summary>
-        public static List<T> GetChildren<T>(this GameObject gameObject, Func<T, bool> predicate = null, bool recursive = true, View parent = null, SearchAlgorithm searchAlgorithm = SearchAlgorithm.DepthFirst) where T : View
-        {
-            List<T> children = new List<T>();
-            gameObject.ForEachChild<T>(x =>
-            {
-                if (predicate == null || predicate(x))
-                {
-                    children.Add(x);
-                }
-            }, recursive, parent, searchAlgorithm);
-
-            return children;
-        }
-
-        /// <summary>
-        /// Performs an action on view children of a game object.
-        /// </summary>
-        /// <typeparam name="T">Types of views to do action on.</typeparam>
-        /// <param name="gameObject">Root game object.</param>
-        /// <param name="action">Action to perform.</param>
-        /// <param name="recursive">Boolean indicating if children of children should be traversed.</param>
-        /// <param name="contentChild">Boolean indicating if views must be content children (i.e. appearing as content in the view).</param>
-        /// <param name="searchAlgorithm">Search algorithm to use.</param>
-        public static void ForEachChild<T>(this GameObject gameObject, Action<T> action, bool recursive = true, View parent = null, SearchAlgorithm searchAlgorithm = SearchAlgorithm.DepthFirst) where T : View
-        {
-            switch (searchAlgorithm)
+            switch (traversalAlgorithm)
             {
                 default:
-                case SearchAlgorithm.DepthFirst:
-                    foreach (Transform child in gameObject.transform)
+                case TraversalAlgorithm.DepthFirst:
+                    foreach (Transform child in view.gameObject.transform)
                     {
                         bool skipChild = false;
+                        var childView = child.GetComponent<View>();
                         if (parent != null)
                         {
-                            var view = child.GetComponent<View>();
-                            if (view.Parent != parent.gameObject)
+                            if (childView.Parent != parent)
                                 skipChild = true;
                         }
 
@@ -70,26 +40,31 @@ namespace NUXML
                             var component = child.GetComponent<T>();
                             if (component != null)
                             {
-                                action(component);
+                                var result = action(component);
+                                if (!result)
+                                {
+                                    // done traversing
+                                    return;
+                                }
                             }
                         }
 
                         if (recursive)
                         {
-                            child.gameObject.ForEachChild(action, recursive);
+                            childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
                         }
                     }
                     break;
 
-                case SearchAlgorithm.BreadthFirst:
-                    Queue<GameObject> queue = new Queue<GameObject>();
-                    foreach (Transform child in gameObject.transform)
+                case TraversalAlgorithm.BreadthFirst:
+                    Queue<View> queue = new Queue<View>();
+                    foreach (Transform child in view.gameObject.transform)
                     {
                         bool skipChild = false;
+                        var childView = child.GetComponent<View>();
                         if (parent != null)
                         {
-                            var view = child.GetComponent<View>();
-                            if (view.Parent != parent.gameObject)
+                            if (childView.Parent != parent.gameObject)
                                 skipChild = true;
                         }
 
@@ -98,60 +73,70 @@ namespace NUXML
                             var component = child.GetComponent<T>();
                             if (component != null)
                             {
-                                action(component);
+                                var result = action(component);
+                                if (!result)
+                                {
+                                    // done traversing
+                                    return;
+                                }
                             }
                         }
 
                         if (recursive)
                         {
                             // add children to queue
-                            queue.Enqueue(child.gameObject);
+                            queue.Enqueue(childView);
                         }
                     }
 
-                    foreach (GameObject go in queue)
+                    foreach (var queuedView in queue)
                     {
-                        go.ForEachChild(action, recursive, parent, searchAlgorithm);
+                        queuedView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
                     }
                     break;
 
-                case SearchAlgorithm.ReverseDepthFirst:
-                    foreach (Transform child in gameObject.transform)
+                case TraversalAlgorithm.ReverseDepthFirst:
+                    foreach (Transform child in view.gameObject.transform)
                     {
+                        var childView = child.GetComponent<View>();
                         if (recursive)
                         {
-                            child.gameObject.ForEachChild(action, recursive);
+                            childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
                         }
 
                         if (parent != null)
                         {
-                            var view = child.GetComponent<View>();
-                            if (view.Parent != parent.gameObject)
+                            if (childView.Parent != parent.gameObject)
                                 continue;
                         }
 
                         var component = child.GetComponent<T>();
                         if (component != null)
                         {
-                            action(component);
+                            var result = action(component);
+                            if (!result)
+                            {
+                                // done traversing
+                                return;
+                            }
                         }
                     }
                     break;
 
-                case SearchAlgorithm.ReverseBreadthFirst:
+                case TraversalAlgorithm.ReverseBreadthFirst:
                     Stack<T> componentStack = new Stack<T>();
-                    Stack<GameObject> childStack = new Stack<GameObject>();
-                    foreach (Transform child in gameObject.transform)
+                    Stack<View> childStack = new Stack<View>();
+                    foreach (Transform child in view.gameObject.transform)
                     {
+                        var childView = child.GetComponent<View>();
                         if (recursive)
                         {
-                            childStack.Push(child.gameObject);
+                            childStack.Push(childView);
                         }
 
                         if (parent != null)
                         {
-                            var view = child.GetComponent<View>();
-                            if (view.Parent != parent.gameObject)
+                            if (childView.Parent != parent.gameObject)
                                 continue;
                         }
 
@@ -162,14 +147,19 @@ namespace NUXML
                         }
                     }
 
-                    foreach (var childObject in childStack)
+                    foreach (var childStackView in childStack)
                     {
-                        childObject.ForEachChild(action, recursive, parent, searchAlgorithm);
+                        childStackView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
                     }
 
                     foreach (T component in componentStack)
                     {
-                        action(component);
+                        var result = action(component);
+                        if (!result)
+                        {
+                            // done traversing
+                            return;
+                        }
                     }
 
                     break;
@@ -177,130 +167,277 @@ namespace NUXML
         }
 
         /// <summary>
-        /// Performs an action on view children of a view.
+        /// Traverses the view object tree and performs an action on each child until the action returns false.
         /// </summary>
-        public static void ForEachChild<T>(this View view, Action<T> action, bool recursive = true, View parent = null, SearchAlgorithm searchAlgorithm = SearchAlgorithm.DepthFirst) where T : View
+        public static void ForEachChild<T>(this View view, Action<T> action, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
-            view.gameObject.ForEachChild<T>(action, recursive, parent, searchAlgorithm);
+            view.DoUntil<T>(x => { action(x); return true; }, recursive, parent, traversalAlgorithm);
         }
 
         /// <summary>
-        /// Performs an action on all parents of a game object.
+        /// Traverses the view object tree and performs an action on this view and its children until the action returns false.
         /// </summary>
-        public static void ForEachParent<T>(this GameObject gameObject, Action<T> action, bool recursive = true) where T : UnityEngine.Component
+        public static void ForThisAndEachChild<T>(this View view, Action<T> action, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
-            var parent = gameObject.transform.parent;
-            if (parent != null)
+            var thisView = view.gameObject.GetComponent<T>();
+            if (thisView != null)
             {
-                var component = parent.GetComponent<T>();
-                if (component != null)
-                {
-                    action(component);
-                }
+                action(thisView);
+            }
+            view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
+        }
 
-                if (recursive)
-                {
-                    parent.gameObject.ForEachParent(action, recursive);
-                }
+        /// <summary>
+        /// Traverses the view object tree and performs an action on each child until the action returns false.
+        /// </summary>
+        public static void ForEachChild<T>(this GameObject gameObject, Action<T> action, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            var view = gameObject.GetComponent<View>();
+            if (view != null)
+            {
+                view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
             }
         }
 
         /// <summary>
-        /// Gets layout root.
+        /// Traverses the view object tree and performs an action on each child until the action returns false.
         /// </summary>
-        public static GameObject GetLayoutRoot(this GameObject gameObject)
+        public static void ForThisAndEachChild<T>(this GameObject gameObject, Action<T> action, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
-            var viewComponent = gameObject.GetComponent<View>();
-            if (viewComponent != null && viewComponent.IsLayoutRoot)
+            var view = gameObject.GetComponent<T>();
+            if (view != null)
             {
-                return gameObject;
+                action(view);
+                view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
+            }
+        }
+
+        /// <summary>
+        /// Traverses the view object tree and returns the first view that matches the predicate.
+        /// </summary>
+        public static T Find<T>(this View view, Predicate<T> predicate, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            T result = null;
+            view.DoUntil<T>(x =>
+            {
+                if (predicate(x))
+                {
+                    result = x;
+                    return false;
+                }
+                return true;
+            }, recursive, parent, traversalAlgorithm);
+            return result;
+        }
+        
+        /// <summary>
+        /// Returns first view of type T found.
+        /// </summary>
+        public static T Find<T>(this View view, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
+        }
+
+        /// <summary>
+        /// Returns first view of type T found.
+        /// </summary>
+        public static T Find<T>(this GameObject gameObject, Predicate<T> predicate, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            var view = gameObject.GetComponent<View>();
+            if (view == null)
+            {
+                return null;
             }
             
-            var parent = gameObject.transform.parent;
-            if (parent == null)
-                return null;
-
-            return parent.gameObject.GetLayoutRoot();
+            return view.Find<T>(predicate, recursive, parent, traversalAlgorithm);            
         }
 
         /// <summary>
-        /// Gets layout root.
+        /// Returns first view of type T found.
         /// </summary>
-        public static View GetLayoutRoot(this View view)
+        public static T Find<T>(this GameObject gameObject, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
-            var go = view.gameObject.GetLayoutRoot();
-            return go != null ? go.GetComponent<View>() : null;
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static View FindView(this View view, string id, bool recursive = true, View parent = null)
-        {
-            return view.FindView<View>(id, recursive, parent);
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static T FindView<T>(this View view, string id, bool recursive = true, View parent = null) where T : View
-        {
-            var go = view.gameObject.FindView<T>(id, recursive, parent);
-            return go != null ? go.GetComponent<T>() : null;
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static GameObject FindView(this GameObject gameObject, string id, bool recursive = true, View parent = null)
-        {
-            return gameObject.FindView<View>(id, recursive, parent);
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static GameObject FindView<T>(this GameObject gameObject, string id, bool recursive = true, View parent = null) where T : View
-        {
-            return gameObject.FindView<T>(id, true, recursive, parent);
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static GameObject FindView<T>(this GameObject gameObject, bool recursive, View parent = null) where T : View
-        {
-            return gameObject.FindView<T>(null, false, recursive, parent);
-        }
-
-        /// <summary>
-        /// Finds view.
-        /// </summary>
-        public static GameObject FindView<T>(this GameObject gameObject, string id, bool filterById, bool recursive, View parent) where T : View
-        {
-            foreach (Transform child in gameObject.transform)
+            var view = gameObject.GetComponent<View>();
+            if (view == null)
             {
-                var viewComponent = child.GetComponent<T>();
-                if (viewComponent != null)
-                {
-                    if ((!filterById || String.Equals(id, viewComponent.Id, StringComparison.OrdinalIgnoreCase)) &&
-                        (parent == null || viewComponent.Parent == parent.gameObject))
-                    {
-                        return child.gameObject;
-                    }
-                }
-
-                if (recursive)
-                {
-                    var result = child.gameObject.FindView<T>(id, recursive, parent);
-                    if (result != null)
-                    {
-                        return result;
-                    }
-                }
+                return null;
             }
 
-            return null;
+            return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
+        }
+
+        /// <summary>
+        /// Returns first view of type T with the specified ID.
+        /// </summary>
+        public static T Find<T>(this View view, string id, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            return view.Find<T>(x => String.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase), recursive, parent, traversalAlgorithm);
+        }
+
+        /// <summary>
+        /// Returns first ascendant of type T found that matches the predicate.
+        /// </summary>
+        public static T FindParent<T>(this View view, Predicate<T> predicate) where T : View
+        {
+            var parent = view.LayoutParent;
+            if (parent == null)
+            {
+                return null;
+            }                        
+            else if (parent is T && predicate(parent as T))
+            {
+                return parent as T;
+            }
+            else
+            {
+                return parent.FindParent(predicate);
+            }
+        }
+
+        /// <summary>
+        /// Returns first ascendant of type T found.
+        /// </summary>
+        public static T FindParent<T>(this View view) where T : View
+        {           
+            return view.FindParent<T>(x => true);
+        }
+
+        /// <summary>
+        /// Performs an action on all ascendants of a view.
+        /// </summary>
+        public static void ForEachParent<T>(this View view, Action<T> action) where T : View
+        {
+            var parent = view.transform.parent;
+            if (parent == null)
+                return;
+
+            var component = parent.GetComponent<T>();
+            if (component != null)
+            {
+                action(component);
+            }
+
+            parent.gameObject.ForEachParent(action);
+        }
+
+        /// <summary>
+        /// Performs an action on all ascendants of a view.
+        /// </summary>
+        public static void ForEachParent<T>(this GameObject gameObject, Action<T> action) where T : View
+        {
+            var view = gameObject.GetComponent<View>();
+            if (view != null)
+            {
+                view.ForEachParent<T>(action);
+            }
+        }
+
+        /// <summary>
+        /// Performs an action on this view and all its ascendants.
+        /// </summary>
+        public static void ForThisAndEachParent<T>(this GameObject gameObject, Action<T> action) where T : View
+        {
+            var view = gameObject.GetComponent<T>();
+            if (view != null)
+            {
+                action(view);
+            }
+
+            gameObject.ForEachParent<T>(action);
+        }
+
+        /// <summary>
+        /// Performs an action on this view and all its ascendants.
+        /// </summary>
+        public static void ForThisAndEachParent<T>(this View view, Action<T> action) where T : View
+        {
+            var thisView = view.gameObject.GetComponent<T>();
+            if (thisView != null)
+            {
+                action(thisView);
+            }
+            view.ForEachParent<T>(action);            
+        }
+
+        /// <summary>
+        /// Gets a list of all descendants. 
+        /// </summary>
+        public static List<T> GetChildren<T>(this View view, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            return view.GetChildren<T>(x => true, recursive, parent, traversalAlgorithm);
+        }
+
+        /// <summary>
+        /// Gets a list of all descendants matching the predicate. 
+        /// </summary>
+        public static List<T> GetChildren<T>(this View view, Func<T, bool> predicate = null, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            var children = new List<T>();
+            view.ForEachChild<T>(x =>
+            {
+                if (predicate(x))
+                {
+                    children.Add(x);
+                }
+            }, recursive, parent, traversalAlgorithm);
+
+            return children;
+        }
+
+        /// <summary>
+        /// Gets a list of all descendants matching the predicate. 
+        /// </summary>
+        public static List<T> GetChildren<T>(this GameObject gameObject, Func<T, bool> predicate = null, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
+        {
+            var view = gameObject.GetComponent<View>();
+            if (view == null)
+            {
+                return new List<T>();
+            }
+
+            return view.GetChildren<T>(predicate, recursive, parent, traversalAlgorithm);
+        }
+
+        /// <summary>
+        /// Destroys a view.
+        /// </summary>
+        public static void Destroy(this View view, bool immediate = false)
+        {
+            view.IsDestroyed.DirectValue = true;
+            if (Application.isPlaying && !immediate)
+            {
+                GameObject.Destroy(view.gameObject);
+            }
+            else
+            {
+                GameObject.DestroyImmediate(view.gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Destroys all children of a view.
+        /// </summary>
+        public static void DestroyChildren(this View view, bool immediate = false)
+        {
+            int childCount = view.transform.childCount;
+            for (int i = childCount - 1; i >= 0; --i)
+            {
+                var go = view.transform.GetChild(i).gameObject;
+                var childView = go.GetComponent<View>();
+                if (childView != null)
+                {
+                    childView.IsDestroyed.DirectValue = true;
+                }
+
+                if (Application.isPlaying && !immediate)
+                {
+                    GameObject.Destroy(go);
+                }
+                else
+                {
+                    GameObject.DestroyImmediate(go);
+                }
+            }
         }
 
         /// <summary>
@@ -311,7 +448,7 @@ namespace NUXML
             // check if from the same type
             if (variable.GetType() != value.GetType())
             {
-                Debug.LogError("[.347] The checked flag is not from the same type as the checked variable.");
+                Debug.LogError("[NUXML] The checked flag is not from the same type as the checked variable.");
                 return false;
             }
 
@@ -319,6 +456,24 @@ namespace NUXML
             ulong num = Convert.ToUInt64(value);
             ulong num2 = Convert.ToUInt64(variable);
             return (num2 & num) == num;
+        }
+
+        /// <summary>
+        /// Clamps a value to specified range [min, max].
+        /// </summary>
+        public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
+        {
+            if (val.CompareTo(min) < 0) return min;
+            else if (val.CompareTo(max) > 0) return max;
+            else return val;
+        }
+
+        /// <summary>
+        /// Gets value from dictionary and returns null if it doesn't exist.
+        /// </summary>
+        public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key)
+        {
+            return dict.ContainsKey(key) ? dict[key] : default(TValue);
         }
 
         /// <summary>
@@ -333,117 +488,6 @@ namespace NUXML
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
             rectTransform.offsetMin = new Vector2(0.0f, 0.0f);
             rectTransform.offsetMax = new Vector2(0.0f, 0.0f);
-        }
-
-        /// <summary>
-        /// Clamps a value to specified range [min, max].
-        /// </summary>
-        public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
-        {
-            if (val.CompareTo(min) < 0) return min;
-            else if (val.CompareTo(max) > 0) return max;
-            else return val;
-        }
-
-        /// <summary>
-        /// Converts RGB color to HSV.
-        /// </summary>
-        public static ColorHsv ToHsv(this Color color)
-        {
-            ColorHsv hsv = new ColorHsv();
-            float r = color.r;
-            float g = color.g;
-            float b = color.b;
-            float max = Math.Max(r, Math.Max(g, b));
-            float min = Math.Min(r, Math.Min(g, b));
-
-            // calculate value
-            hsv.Value = max;
-            if (hsv.Value == 0)
-            {
-                // color is black
-                hsv.Hue = 0;
-                hsv.Saturation = 0;
-                return hsv;
-            }
-
-            // normalize value to 1
-            r = r / hsv.Value;
-            g = g / hsv.Value;
-            b = b / hsv.Value;
-            max = Math.Max(r, Math.Max(g, b));
-            min = Math.Min(r, Math.Min(g, b));
-
-            // calculate saturation
-            hsv.Saturation = max - min;
-            if (hsv.Saturation == 0)
-            {
-                hsv.Hue = 0;
-                return hsv;
-            }
-
-            // normalize saturation
-            r = (r - min) / (max - min);
-            g = (g - min) / (max - min);
-            b = (b - min) / (max - min);
-            max = Math.Max(r, Math.Max(g, b));
-            min = Math.Min(r, Math.Min(g, b));
-
-            // calculate hue
-            if (max == r)
-            {
-                hsv.Hue = 60f * (g - b);
-                if (hsv.Hue < 0)
-                {
-                    hsv.Hue += 360f;
-                }
-            }
-            else if (max == g)
-            {
-                hsv.Hue = 120f + 60f * (b - r);
-            }
-            else if (max == b)
-            {
-                hsv.Hue = 240f + 60f * (r - g);
-            }
-
-            return hsv;
-        }
-
-        /// <summary>
-        /// Converts RGB color to HSV.
-        /// </summary>
-        public static Color ToRgb(this ColorHsv hsv)
-        {
-            int hi = (int)Math.Floor(hsv.Hue / 60.0) % 6;
-            float f = (float)(hsv.Hue / 60.0f - Math.Floor(hsv.Hue / 60.0));
-
-            float p = (hsv.Value * (1f - hsv.Saturation));
-            float q = (hsv.Value * (1f - f * hsv.Saturation));
-            float t = (hsv.Value * (1f - (1f - f) * hsv.Saturation));
-
-            if (hi == 0)
-                return new Color(hsv.Value, t, p);
-            else if (hi == 1)
-                return new Color(q, hsv.Value, p);
-            else if (hi == 2)
-                return new Color(p, hsv.Value, t);
-            else if (hi == 3)
-                return new Color(p, q, hsv.Value);
-            else if (hi == 4)
-                return new Color(t, p, hsv.Value);
-            else
-                return new Color(hsv.Value, p, q);
-        }
-
-        /// <summary>
-        /// Removes all whitespace from a string.
-        /// </summary>
-        public static string RemoveWhitespace(this string input)
-        {
-            return new string(input.ToCharArray()
-                .Where(c => !Char.IsWhiteSpace(c))
-                .ToArray());
         }
 
         /// <summary>
@@ -466,6 +510,92 @@ namespace NUXML
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.transform as RectTransform, mousePosition, canvas.worldCamera, out pos);
             Vector2 mouseScreenPosition = canvas.transform.TransformPoint(pos);
             return mouseScreenPosition;
+        }
+
+        /// <summary>
+        /// Removes all whitespace from a string.
+        /// </summary>
+        public static string RemoveWhitespace(this string input)
+        {
+            return new string(input.ToCharArray()
+                .Where(c => !Char.IsWhiteSpace(c))
+                .ToArray());
+        }
+
+        /// <summary>
+        /// Gets view field info from a type.
+        /// </summary>
+        public static MemberInfo GetFieldInfo(this Type type, string field, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
+        {
+            var fieldInfo = type.GetField(field, bindingFlags);
+            if (fieldInfo != null)
+                return fieldInfo;
+            
+            var propertyInfo = type.GetProperty(field, bindingFlags);
+            return propertyInfo;            
+        }
+
+        /// <summary>
+        /// Gets view field type from view field info.
+        /// </summary>
+        public static Type GetFieldType(this MemberInfo memberInfo)
+        {
+            var fieldInfo = memberInfo as FieldInfo;
+            if (fieldInfo != null)
+            {
+                return fieldInfo.FieldType;
+            }
+
+            var propertyInfo = memberInfo as PropertyInfo;
+            if (propertyInfo != null)
+            {
+                return propertyInfo.PropertyType;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets value from a view field.
+        /// </summary>
+        public static object GetFieldValue(this MemberInfo memberInfo, object typeObject)
+        {
+            var fieldInfo = memberInfo as FieldInfo;
+            if (fieldInfo != null)
+                return fieldInfo.GetValue(typeObject);
+
+            var propertyInfo = memberInfo as PropertyInfo;
+            return propertyInfo.GetValue(typeObject, null);
+        }
+
+        /// <summary>
+        /// Sets view field value.
+        /// </summary>
+        public static void SetFieldValue(this MemberInfo memberInfo, object typeObject, object value)
+        {
+            var fieldInfo = memberInfo as FieldInfo;
+            if (fieldInfo != null)
+            {
+                fieldInfo.SetValue(typeObject, value);
+                return;
+            }
+
+            var propertyInfo = memberInfo as PropertyInfo;
+            if (propertyInfo != null)
+            {
+                propertyInfo.SetValue(typeObject, value, null);
+            }
+        }
+
+        /// <summary>
+        /// Adds range of items to a hashset.
+        /// </summary>
+        public static void AddRange<T>(this HashSet<T> hashSet, IEnumerable<T> items)
+        {
+            foreach (var item in items)
+            {
+                hashSet.Add(item);
+            }
         }
 
         #endregion

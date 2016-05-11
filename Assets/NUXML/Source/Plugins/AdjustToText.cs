@@ -9,9 +9,24 @@ namespace NUXML
     /// </summary>
     public enum AdjustToText
     {
-        None    = 0,
-        Width   = 1,
-        Height  = 2,
+        /// <summary>
+        /// Neither width nor height should be adjusted to text.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Adjust width to text.
+        /// </summary>
+        Width = 1,
+
+        /// <summary>
+        /// Adjust height to text.
+        /// </summary>
+        Height = 2,
+
+        /// <summary>
+        /// Adjust width and height to text.
+        /// </summary>
         WidthAndHeight = 3
     }
 }

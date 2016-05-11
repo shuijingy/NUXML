@@ -11,11 +11,11 @@ namespace NUXML
     public class TextToken
     {
         #region Fields
-        
+
         public TextTokenType TextTokenType;
-        public View          EmbeddedView;
-        public int           FontSize;
-        public Color         FontColor;
+        public View EmbeddedView;
+        public int FontSize;
+        public Color FontColor;
 
         #endregion        
     }
@@ -25,15 +25,54 @@ namespace NUXML
     /// </summary>
     public enum TextTokenType
     {
-        Unknown      = 0,
+        /// <summary>
+        /// Unknown text token.
+        /// </summary>
+        Unknown = 0,
+
+        /// <summary>
+        /// Embedded view token.
+        /// </summary>
         EmbeddedView = 1,
-        BoldStart    = 2,
-        BoldEnd      = 3,
-        ItalicStart  = 4,
-        ItalicEnd    = 5,
-        SizeStart    = 6,
-        SizeEnd      = 7,
-        ColorStart   = 8,
-        ColorEnd     = 9,
+
+        /// <summary>
+        /// Bold start token.
+        /// </summary>
+        BoldStart = 2,
+
+        /// <summary>
+        /// Bold end token.
+        /// </summary>
+        BoldEnd = 3,
+
+        /// <summary>
+        /// Italic start token.
+        /// </summary>
+        ItalicStart = 4,
+
+        /// <summary>
+        /// Italic end token.
+        /// </summary>
+        ItalicEnd = 5,
+
+        /// <summary>
+        /// Text size start token.
+        /// </summary>
+        SizeStart = 6,
+
+        /// <summary>
+        /// Text size end token.
+        /// </summary>
+        SizeEnd = 7,
+
+        /// <summary>
+        /// Text color start token.
+        /// </summary>
+        ColorStart = 8,
+
+        /// <summary>
+        /// Text color end token.
+        /// </summary>
+        ColorEnd = 9,
     }
 }

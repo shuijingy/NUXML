@@ -147,7 +147,7 @@ namespace NUXML.ValueConverters
             ColorCodes.Add("darkturquoise", HexToColor("#00ced1").Value);
             ColorCodes.Add("darkviolet", HexToColor("#9400d3").Value);
             ColorCodes.Add("deeppink", HexToColor("#ff1493").Value);
-            ColorCodes.Add("deepindigo", HexToColor("#8A2BE2").Value);            
+            ColorCodes.Add("deepindigo", HexToColor("#8A2BE2").Value);
             ColorCodes.Add("deeppink1", HexToColor("#ff1493").Value);
             ColorCodes.Add("deeppink2", HexToColor("#ee1289").Value);
             ColorCodes.Add("deeppink3", HexToColor("#cd1076").Value);
@@ -559,7 +559,7 @@ namespace NUXML.ValueConverters
             ColorCodes.Add("tomato2", HexToColor("#ee5c42").Value);
             ColorCodes.Add("tomato3", HexToColor("#cd4f39").Value);
             ColorCodes.Add("tomato4", HexToColor("#8b3626").Value);
-            ColorCodes.Add("tropicalindigo", HexToColor("#9683EC").Value);            
+            ColorCodes.Add("tropicalindigo", HexToColor("#9683EC").Value);
             ColorCodes.Add("turquoise", HexToColor("#40e0d0").Value);
             ColorCodes.Add("turquoise1", HexToColor("#00f5ff").Value);
             ColorCodes.Add("turquoise2", HexToColor("#00e5ee").Value);
@@ -591,7 +591,7 @@ namespace NUXML.ValueConverters
         #region Methods
 
         /// <summary>
-        /// Value converter for Color type.
+        /// Value converter for Vector2 type.
         /// </summary>
         public override ConversionResult Convert(object value, ValueConverterContext context)
         {
@@ -600,7 +600,12 @@ namespace NUXML.ValueConverters
                 return base.Convert(value, context);
             }
 
-            if (value.GetType() == typeof(string))
+            Type valueType = value.GetType();
+            if (valueType == _type)
+            {
+                return base.Convert(value, context);
+            }
+            else if (valueType == _stringType)
             {
                 var stringValue = (string)value;
                 try
@@ -614,7 +619,7 @@ namespace NUXML.ValueConverters
                     }
                     else
                     {
-                        // is the value a color-name?
+                        // is the value a color name?
                         string colorName = stringValue.Trim().ToLower();
                         if (ColorCodes.ContainsKey(colorName))
                         {
@@ -640,6 +645,15 @@ namespace NUXML.ValueConverters
             }
 
             return ConversionFailed(value);
+        }
+
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public override string ConvertToString(object value)
+        {
+            Color color = (Color)value;
+            return String.Format("{0},{1},{2},{3}", color.r, color.g, color.b, color.a);
         }
 
         /// <summary>
@@ -683,7 +697,7 @@ namespace NUXML.ValueConverters
             if (values.Length == 3)
             {
                 return new Color(System.Convert.ToSingle(values[0], CultureInfo.InvariantCulture),
-                    System.Convert.ToSingle(values[1], CultureInfo.InvariantCulture), 
+                    System.Convert.ToSingle(values[1], CultureInfo.InvariantCulture),
                     System.Convert.ToSingle(values[2], CultureInfo.InvariantCulture));
             }
             else if (values.Length == 4)

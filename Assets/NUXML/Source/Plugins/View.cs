@@ -1,10 +1,14 @@
 ﻿#region Using Statements
+using NUXML.ValueConverters;
+using NUXML.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -15,135 +19,210 @@ using UnityEngine.UI;
 namespace NUXML
 {
     /// <summary>
-    /// Base class for view-models.
+    /// Base class for view models.
     /// </summary>
+    /// <d>Base class for all view models in the framework. All view models must be a subclass of this class to be processed and managed the framework. </d>
+    [HideInPresenter]
     public class View : MonoBehaviour
     {
         #region Fields
 
-        public ViewAction EnabledChanged;
-
-        [ChangeHandler("UpdateLayouts")]
-        public ElementSize Width;
-        public bool WidthSet;
-
-        [ChangeHandler("UpdateLayouts")]
-        public ElementSize Height;
-        public bool HeightSet;
-
-        [ChangeHandler("UpdateLayout")]
-        public Alignment Alignment;
-        public bool AlignmentSet;
-
-        [ChangeHandler("UpdateLayout")]
-        public Margin Margin;
-
-        [ChangeHandler("UpdateLayout")]
-        public Margin Offset;
-
-        [ChangeHandler("UpdateLayout")]
-        public Margin OffsetFromParent;
-
-        [ChangeHandler("UpdateLayout")]
-        public bool UpdateRectTransform;
-
-        [ChangeHandler("UpdateLayout")]
-        public bool UpdateBackground;
-
-        [ChangeHandler("UpdateBehavior")]
-        public Color BackgroundColor;
-        public bool BackgroundColorSet;
-
-        [ChangeHandler("UpdateBehavior")]
-        public Sprite BackgroundImage = null;
-
-        [ChangeHandler("UpdateBehavior")]
-        public UnityEngine.UI.Image.Type BackgroundImageType;
-
-        [ChangeHandler("UpdateBehavior")]
-        public Material BackgroundMaterial = null;
-
-        [ChangeHandler("UpdateBehavior")]
-        public bool PreserveAspect;
-
-        [ChangeHandler("UpdateBehavior")]
-        public bool Enabled;
-
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// The ID of the view. 
+        /// </summary>
+        /// <d>Specifies a unique ID for the view. Used to map the view to reference fields on the parent view model. Provides a way to reference the view in data bindings. Is used as selectors in styles.</d>
+        [ChangeHandler("IdChanged")]
         public string Id;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// The style of the view.
+        /// </summary>
+        /// <d>Used as selector by the styles. Specifies the name of the style that is to be applied to the view and any children that explicitly inherits its style. The style is applied when the view is created (usually in the editor as the XUML is processed).</d>
         public string Style;
 
-        [ChangeHandler("UpdateBehavior")]
-        public float Alpha;
-        public bool AlphaSet;
+        /// <summary>
+        /// Based on style.
+        /// </summary>
+        /// <d>Used in style definition to specify which style it's based on.</d>
+        public string BasedOn;
 
-        [ChangeHandler("UpdateBehavior")]
-        public Vector3 Rotation;
-        public bool RotationSet;
+        /// <summary>
+        /// The theme of the view.
+        /// </summary>
+        /// <d>Specifies the name of the theme that is applied to the view and its children. The theme determines which set of styles are to be considered when applying matching styles to the view.</d>
+        public string Theme;
 
-        [ChangeHandler("UpdateBehavior")]
-        public Vector3 Scale;
-        public bool ScaleSet;
+        /// <summary>
+        /// Base directory.
+        /// </summary>
+        /// <d>Specifies the base directory to be used by the view and its children. The base directory is used when loading resources such as sprites, fonts, etc.</d>
+        public string BaseDirectory;
 
-        [ChangeHandler("UpdateBehavior")]
-        public Vector2 Pivot;
+        /// <summary>
+        /// Unit size.
+        /// </summary>
+        /// <d>Specifies the user-defined unit size to be used by the view and its children. Used when element size is specified in user-defined units to convert it into pixels.</d>
+        public Vector3 UnitSize;
 
-        [ChangeHandler("UpdateBehavior")]
-        public HideFlags HideFlags;
+        /// <summary>
+        /// Layout parent view.
+        /// </summary>
+        /// <d>The layout parent view is the direct ascendant of the current view in the scene object hierarchy.</d>
+        [NotSetFromXuml]
+        public View LayoutParent;
 
-        [ChangeHandler("UpdateBehavior")]
-        public bool AlwaysBlockRaycast;
+        /// <summary>
+        /// Parent view.
+        /// </summary>
+        /// <d>The parent of the view is the logical parent to which this view belongs. In the XUML any view you can see has the current view as its logical parent.</d>
+        [NotSetFromXuml]
+        public View Parent;
 
-        public int SortIndex;
+        /// <summary>
+        /// Content view.        
+        /// </summary>
+        /// <d>View that is the parent to the content of this view. Usually it is the current view itself but when a ContentPlaceholder is used the Content points to the view that contains the ContentPlaceholder.</d>
+        [NotSetFromXuml]
+        public View Content;
 
-        [NotSetFromXml]
-        public bool ChildLayoutUpdated;
+        /// <summary>
+        /// View state.
+        /// </summary>
+        /// <d>View state name. Determines state values to be applied to the view. All views start out in the "Default" state and when the state changes the values associated with that state are applied to the view.</d>
+        [ChangeHandler("StateChanged", TriggerImmediately = true)]
+        [NotSetFromXuml]
+        public _string State;
 
-        [NotSetFromXml]
-        public string Name;
+        /// <summary>
+        /// Indicates if the view is enabled.
+        /// </summary>
+        /// <d>Activates/deactivates the view. If set to false in this or in any parent view, all components are disabled, attached renderers are turned off, etc. Any components attached will no longer have Update() called.</d>
+        [ChangeHandler("IsActiveChanged", TriggerImmediately = true)]
+        public _bool IsActive;
 
-        [NotSetFromXml]
-        public GameObject Parent;
+        /// <summary>
+        /// Hide flags for the game object.
+        /// </summary>
+        /// <d>Bit mask that controls object destruction, saving and visibility in editor.</d>
+        [MapTo("GameObject.hideFlags")]
+        public _HideFlags HideFlags;
 
-        [NotSetFromXml]
-        public View ParentView;
+        /// <summary>
+        /// GameObject the view is attached to.
+        /// </summary>
+        /// <d>GameObject that the view is attached to.</d>
+        public GameObject GameObject;
 
-        [NotSetFromXml]
-        public GameObject LayoutParent;
+        #region Transform
 
-        [NotSetFromXml]
-        public View LayoutParentView;
+        /// <summary>
+        /// Position, rotation and scale of the view.
+        /// </summary>
+        /// <d>The view transform is used to manipulate the position, rotation and scale of the view in relation to the layout parent view's transform or in world space. The transform is sometimes manipulated indirectly through other view fields and through the view model's internal layout logic.</d>
+        public Transform Transform;
 
-        [NotSetFromXml]
-        public bool IsLayoutRoot;
+        /// <summary>
+        /// Position of the view.
+        /// </summary>
+        /// <d>The local position of the view in relation to the layout parent view transform.</d>
+        [MapTo("Transform.localPosition")]
+        public _Vector3 Position;
 
-        [NotSetFromXml]
-        public bool IsDestroyed;
+        /// <summary>
+        /// Rotation of the view.
+        /// </summary>
+        /// <d>The local rotation of the view in relation to the layout parent view transform. Stored as a Quaternion but specified in XUML as euler angles.</d>
+        [MapTo("Transform.localRotation")]
+        public _Quaternion Rotation;
 
-        [NotSetFromXml]
-        public List<ViewAction> ViewActions;
+        /// <summary>
+        /// Scale of the view.
+        /// </summary>
+        /// <d>The scale of the view in relation to the layout parent view transform.</d>
+        [MapTo("Transform.localScale")]
+        public _Vector3 Scale;
 
-        [NotSetFromXml]
-        public List<FieldBinding> FieldBindings;
+        #endregion
 
-        [NotSetFromXml]
-        public List<FieldChangeHandler> FieldChangeHandlers;
+        /// <summary>
+        /// Item data.
+        /// </summary>
+        /// <d>Provides a mechanism to bind to dynamic list data. The item is set, e.g. by the List view on the child views it generates for its dynamic list data. The Item points to the list item data the view is associated with.</d>
+        public _object Item;
+
+        /// <summary>
+        /// Indicates if this view is to be used as a template.
+        /// </summary>
+        /// <d>A template view is used to create dynamic instances of the view. Used by certain views such as the List and TabPanel.</d>
+        public _bool IsTemplate;
+
+        /// <summary>
+        /// Activated view action.
+        /// </summary>
+        /// <d>Triggered every time the view is activated. Also triggered once the view is intialized if it starts out activated.</d>
+        public ViewAction Activated;
+
+        /// <summary>
+        /// Deactivated view action.
+        /// </summary>
+        /// <d>Triggered every time the view is deactivated. Also triggered once the view is intialized if it starts out deactivated.</d>
+        public ViewAction Deactivated;
+
+        /// <summary>
+        /// Indicates if the view has been destroyed by GameObject.Destroy().
+        /// </summary>
+        [NotSetFromXuml]
+        public _bool IsDestroyed;
+
+        /// <summary>
+        /// Indicates if the view has been created dynamically. 
+        /// </summary>
+        [NotSetFromXuml]
+        public _bool IsDynamic;
+
+        /// <summary>
+        /// The name of the view's type.
+        /// </summary>
+        [NotSetFromXuml]
+        public string ViewTypeName;
+
+        /// <summary>
+        /// Name of the view as specified in the XUML.
+        /// </summary>
+        [NotSetFromXuml]
+        public string ViewXumlName;
+
+        [NotSetFromXuml]
+        public List<ViewFieldBinding> ViewFieldBindings;
+
+        [NotSetFromXuml]
+        public List<ViewActionEntry> ViewActionEntries;
+
+        [NotSetFromXuml]
+        public List<ViewFieldStateValue> ViewFieldStateValues;
+
+        [NotSetFromXuml]
+        public List<string> SetViewFieldNames;
+
+        public static string DefaultStateName = "Default";
+        public static string AnyStateName = "Any";
 
         private Dictionary<string, ViewFieldData> _viewFieldData;
-        private Dictionary<string, Dictionary<string, MethodInfo>> _changeHandlers; // using string and dictionaries as keys because windows phone 8 can't hash FieldInfo (and possibly MethodInfo) correctly
-        private Dictionary<string, MethodInfo> _triggeredChangeHandlers;
-        private HashSet<string> _changedFields;
+        private Dictionary<string, Dictionary<string, ViewFieldStateValue>> _stateValues;
+        private Dictionary<string, Dictionary<string, StateAnimation>> _stateAnimations;
+        private HashSet<string> _setViewFields;
+        private List<ValueObserver> _valueObservers;
+        private HashSet<string> _changeHandlers;
+        private Dictionary<string, MethodInfo> _changeHandlerMethods;
+        private Dictionary<string, string> _expressionViewField;
+        private List<ViewAction> _eventSystemViewActions;
+        private bool _isDefaultState;
+        private string _previousState;
+        private StateAnimation _stateAnimation;
 
-        [NotSetFromXml]
-        public bool IsDynamic;
-
-        [NotSetFromXml]
-        public GameObject RootCanvas;
-
-        [NotSetFromXml]
-        public ViewPresenter ParentViewPresenter;
+#if UNITY_4_6 || UNITY_5_0
+        private bool _eventSystemTriggersInitialized;
+#endif
 
         #endregion
 
@@ -154,31 +233,22 @@ namespace NUXML
         /// </summary>
         public View()
         {
-            Alignment = Alignment.Center;
-            Width  = new ElementSize(1.0f, ElementSizeUnit.Percents);
-            Height = new ElementSize(1.0f, ElementSizeUnit.Percents);
-            Margin = new Margin();
-            Offset = new Margin();
-            BackgroundColor     = Color.clear;
-            BackgroundImageType = UnityEngine.UI.Image.Type.Simple;
-            Enabled     = true;
-            ViewActions = new List<ViewAction>();
-            OffsetFromParent = new Margin();
-            UpdateRectTransform = true;
-            UpdateBackground = true;
-            FieldBindings = new List<FieldBinding>();
-            FieldChangeHandlers = new List<FieldChangeHandler>();
-            HideFlags = HideFlags.None;
-            Pivot = new Vector2(0.5f, 0.5f);
-            BackgroundImage    = null;
-            BackgroundMaterial = null;
-            SortIndex = 0;
-            AlwaysBlockRaycast = false;
+            ViewTypeName = GetType().Name;
+            ViewFieldBindings = new List<ViewFieldBinding>();
+            ViewActionEntries = new List<ViewActionEntry>();
+            ViewFieldStateValues = new List<ViewFieldStateValue>();
+            SetViewFieldNames = new List<string>();
 
-            _changeHandlers = new Dictionary<string, Dictionary<string, MethodInfo>>();
-            _triggeredChangeHandlers = new Dictionary<string, MethodInfo>();
-            _changedFields = new HashSet<string>();
+            // initalize private data (also done in InitializeInternalDefaultValues because of being set to null during deserialization)
             _viewFieldData = new Dictionary<string, ViewFieldData>();
+            _stateValues = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
+            _stateAnimations = new Dictionary<string, Dictionary<string, StateAnimation>>();
+            _setViewFields = new HashSet<string>();
+            _valueObservers = new List<ValueObserver>();
+            _changeHandlers = new HashSet<string>();
+            _changeHandlerMethods = new Dictionary<string, MethodInfo>();
+            _expressionViewField = new Dictionary<string, string>();
+            _eventSystemViewActions = new List<ViewAction>();
         }
 
         #endregion
@@ -186,822 +256,1399 @@ namespace NUXML
         #region Methods
 
         /// <summary>
-        /// Cleans up.
+        /// Sets view value.
         /// </summary>
-        public void CleanUp()
+        public object SetValue(string viewField, object value)
         {
-            if (IsDynamic)
+            return SetValue(viewField, value, true, null, null, true);
+        }
+
+        /// <summary>
+        /// Sets view field value. 
+        /// </summary>
+        /// <param name="viewField">View field path.</param>
+        /// <param name="value">Value to be set.</param>
+        /// <param name="updateDefaultState">Boolean indicating if the default state should be updated (if the view is in the default state).</param>
+        /// <param name="callstack">Callstack used to prevent cyclical SetValue calls.</param>
+        /// <param name="context">Value converter context.</param>
+        /// <returns>Returns the converted value set.</returns>
+        public object SetValue(string viewField, object value, bool updateDefaultState, HashSet<ViewFieldData> callstack, ValueConverterContext context, bool notifyObservers)
+        {
+            callstack = callstack ?? new HashSet<ViewFieldData>();
+
+            // Debug.Log(String.Format("{0}: {1} = {2}", GameObjectName, viewField, value));
+
+            // get view field data
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
             {
-                // dynamic game objects removes all references
-                FieldBindings.Clear();
-                FieldChangeHandlers.Clear();
-                DestroyImmediate(gameObject);
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, value, viewField));
+                return null;
             }
-            else
+
+            // if default state set default state value
+            if (_isDefaultState && updateDefaultState)
             {
-                // remove references to dynamic field bindings
-                FieldBindings.RemoveAll(x => x.IsDynamic);
+                var defaultStateValues = _stateValues.Get(DefaultStateName);
+                if (defaultStateValues != null)
+                {
+                    // update default state value
+                    if (defaultStateValues.ContainsKey(viewField))
+                    {
+                        defaultStateValues[viewField].SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
+                    }
+                }
+            }
+
+            // set view field value
+            try
+            {
+                return viewFieldData.SetValue(value, callstack, updateDefaultState, context, notifyObservers);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". Exception thrown: {3}", GameObjectName, value, viewField, Utils.GetError(e)));
+                return null;
             }
         }
 
         /// <summary>
         /// Sets the value of a field utilizing the binding and change tracking system.
         /// </summary>
-        public void SetValue<TField>(Expression<Func<TField>> field, object value)
+        protected object SetValue<TField>(Expression<Func<TField>> expression, object value, bool updateDefaultState, ValueConverterContext context, bool notifyObservers)
         {
-            // get field data from expression string
-            string expressionString = field.ToString();
-            if (!_viewFieldData.ContainsKey(expressionString))
-            {
-                var viewFieldPath = expressionString.Substring(expressionString.IndexOf(").") + 2);
-                var newViewFieldData = TypeHelper.GetViewFieldData(this, viewFieldPath);
+            return SetValue(GetMappedViewField(expression), value, updateDefaultState, null, context, notifyObservers);
+        }
 
-                if (newViewFieldData == null)
+        /// <summary>
+        /// Sets the value of a field utilizing the binding and change tracking system.
+        /// </summary>
+        protected object SetValue<TField>(Expression<Func<TField>> expression, object value)
+        {
+            return SetValue(GetMappedViewField(expression), value, true, null, null, true);
+        }
+
+        /// <summary>
+        /// Sets view field is-set indicator. 
+        /// </summary>
+        public void SetIsSet(string viewField)
+        {
+            // get view field data
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to set is-set indicator on view field \"{1}\". View field not found.", GameObjectName, viewField));
+                return;
+            }
+
+            viewFieldData.SetIsSet();
+        }
+
+        /// <summary>
+        /// Sets view field binding.
+        /// </summary>
+        public void SetBinding(string viewField, string viewFieldBinding)
+        {
+            // get view field data for binding target
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, viewFieldBinding, viewField));
+                return;
+            }
+
+            // create BindingValueObserver and add it as observer to source view fields
+            var bindingValueObserver = new BindingValueObserver();
+            bindingValueObserver.Target = viewFieldData;
+
+            // parse view field binding string
+            char[] delimiterChars = { ' ', ',', '$', '(', ')', '{', '}' };
+            string trimmedBinding = viewFieldBinding.Trim();
+
+            if (trimmedBinding.StartsWith("$"))
+            {
+                // transformed multi-binding
+                string[] bindings = trimmedBinding.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
+                if (bindings.Length < 1)
                 {
-                    Debug.LogError(String.Format("[.377] {0}: Unable to parse SetValue lambda view field path \"{1}\".", Name, viewFieldPath));
+                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Improperly formatted binding string.", GameObjectName, viewFieldBinding, viewField));
                     return;
                 }
 
-                _viewFieldData.Add(expressionString, newViewFieldData);
-            }
+                bindingValueObserver.BindingType = BindingType.MultiBindingTransform;
+                bindingValueObserver.ParentView = Parent;
 
-            var viewFieldData = _viewFieldData[expressionString];
-            
-            FieldInfo classFieldInfo = viewFieldData.ClassFieldInfo;
-            FieldInfo objectFieldInfo = viewFieldData.ObjectFieldInfo;
-            object obj = viewFieldData.Object;
+                // get transformation method
+                string transformMethodName = bindings[0];
+                Type transformMethodViewType = Parent.GetType();
 
-            // if object is view call SetValue on it
-            if (obj is View)
-            {
-                (obj as View).SetValue(classFieldInfo, objectFieldInfo, obj, value, null, false, false, false);
-            }
-            else
-            {
-                SetValue(classFieldInfo, objectFieldInfo, obj, value, null, false, false, false);
-            }
-        }
-
-        /// <summary>
-        /// Sets the value of a field utilizing the binding and change tracking system.
-        /// </summary>
-        public void SetValue(FieldInfo classFieldInfo, FieldInfo objectFieldInfo, object obj, object inValue, List<KeyValuePair<View, FieldInfo>> callstack, bool onlySetChanged, bool forceSetValue, bool triggerChangeHandlersImmediately)
-        {
-            if (obj == null)
-                return;
-
-            object value = inValue;
-            if (value != null)
-            {
-                var valueType = value.GetType();
-                var fieldType = objectFieldInfo.FieldType;
-
-                // are the types different?
-                if (valueType != fieldType && !valueType.IsSubclassOf(fieldType))
+                string[] transformStr = bindings[0].Split('.');
+                if (transformStr.Length == 2)
                 {
-                    // yes. check if there are any value converters for the field
-                    var valueConverter = objectFieldInfo.GetCustomAttributes(typeof(ValueConverter), true).FirstOrDefault() as ValueConverter;
-                    if (valueConverter == null)
-                    {
-                        // check if there is a default value converter for type
-                        valueConverter = ViewData.GetValueConverter(fieldType);
-                    }
+                    transformMethodViewType = ViewData.GetViewType(transformStr[0]);
+                    transformMethodName = transformStr[1];
 
-                    if (valueConverter == null)
+                    if (transformMethodViewType == null)
                     {
-                        Debug.LogError(String.Format("[.306] Unable to assign value \"{0}\" to field \"{1}.{2}\". There is no converter to convert from {3} to {4}.", value, obj.GetType().Name, objectFieldInfo.Name, valueType.Name, fieldType.Name));
+                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, transformStr[0]));
                         return;
                     }
-                    else
-                    {
-                        // attempt to convert value to field type
-                        var result = valueConverter.Convert(inValue, ValueConverterContext.Empty);
-                        if (!result.Success)
-                        {
-                            Debug.LogError(String.Format("[.307] Unable to assign value \"{0}\" to field \"{1}.{2}\". Value converion failed. {3}", value, obj.GetType().Name, objectFieldInfo.Name, result.ErrorMessage));
-                            return;
-                        }
-
-                        value = result.ConvertedObject;
-                    }
                 }
-            }
 
-            // is the value different?
-            object objectFieldCurrentValue = objectFieldInfo.GetValue(obj);
-            bool valuesEqual = value != null ? value.Equals(objectFieldCurrentValue) : objectFieldCurrentValue == null;
-            if (!forceSetValue && !onlySetChanged && valuesEqual)
-            {
-                // no. set the value set indicator and return
-                SetValueSetIndicator(classFieldInfo);
-                return;
-            }
-
-            // set field value
-            if (!onlySetChanged)
-            {
-                try
+                bindingValueObserver.TransformMethod = transformMethodViewType.GetMethod(transformMethodName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (bindingValueObserver.TransformMethod == null)
                 {
-                    objectFieldInfo.SetValue(obj, value);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(String.Format("[.308] Unable to assign value \"{0}\" to field \"{1}.{2}\". Exception thrown: {3}", value, obj.GetType().Name, objectFieldInfo.Name, e.Message));
+                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Transform method \"{3}\" not found in view type \"{4}\".", GameObjectName, viewFieldBinding, viewField, bindings[0], Parent.ViewTypeName));
                     return;
                 }
 
-                // set the value-set indicator
-                SetValueSetIndicator(classFieldInfo);
+                foreach (var binding in bindings.Skip(1))
+                {
+                    bool isLocalField, isNegatedField, isOneWay, isResource;
+                    var sourceFieldName = ParseBindingString(binding, out isLocalField, out isNegatedField, out isOneWay, out isResource);
+
+                    // is this a binding to a resource in a resource dictionary?
+                    if (isResource)
+                    {
+                        // yes.
+                        SetResourceBinding(bindingValueObserver, sourceFieldName);
+                        continue;
+                    }
+
+                    // if the binding is defined as a local field (through the '#' notation) we are binding to a field on this view 
+                    // otherwise we are binding to our parent view
+                    var bindingView = isLocalField ? this : Parent;
+
+                    // get view field data for binding
+                    var sourceViewFieldData = bindingView.GetViewFieldData(sourceFieldName);
+                    if (sourceViewFieldData == null)
+                    {
+                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, binding));
+                        return;
+                    }
+                    //Debug.Log(String.Format("Creating binding {0} <-> {1}", sourceViewFieldData.ViewFieldPath, viewFieldData.ViewFieldPath));
+
+                    bindingValueObserver.Sources.Add(new ViewFieldBindingSource(sourceViewFieldData, isNegatedField));
+                    sourceViewFieldData.RegisterValueObserver(bindingValueObserver);
+                }
             }
             else
             {
-                value = objectFieldCurrentValue;
-            }
-
-            // track changed fields
-            if (!_changedFields.Contains(classFieldInfo.Name))
-            {
-                _changedFields.Add(classFieldInfo.Name);
-
-                // does this field have change handlers?
-                if (_changeHandlers.ContainsKey(classFieldInfo.Name))
+                // check for bindings in string
+                string formatString = String.Empty;
+                List<Match> matches = new List<Match>();
+                foreach (Match match in ViewFieldBinding.BindingRegex.Matches(viewFieldBinding))
                 {
-                    // yes. add them to set of triggered change handlers
-                    foreach (var x in _changeHandlers[classFieldInfo.Name])
+                    matches.Add(match);
+                }
+
+                if (matches.Count <= 0)
+                {
+                    // no bindings found
+                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". String contains no binding.", GameObjectName, viewFieldBinding, viewField));
+                    return;
+                }
+
+                // is the binding a format string?
+                bool formatStringBinding = false;
+                if (matches.Count > 1 || (matches[0].Value.Length != viewFieldBinding.Length) || !String.IsNullOrEmpty(matches[0].Groups["format"].Value))
+                {
+                    // yes. 
+                    int matchCount = 0;
+                    formatString = ViewFieldBinding.BindingRegex.Replace(viewFieldBinding, x =>
                     {
-                        if (!_triggeredChangeHandlers.ContainsKey(x.Key))
+                        string matchCountString = matchCount.ToString();
+                        ++matchCount;
+                        return String.Format("{{{0}{1}}}", matchCountString, x.Groups["format"]);
+                    });
+
+                    formatStringBinding = true;
+                    bindingValueObserver.BindingType = BindingType.MultiBindingFormatString;
+                    bindingValueObserver.FormatString = formatString;
+                }
+
+                // parse view fields for binding source(s)
+                foreach (var match in matches)
+                {
+                    var binding = match.Groups["field"].Value.Trim();
+                    bool isLocalField, isNegatedField, isOneWay, isResource;
+                    var sourceFieldName = ParseBindingString(binding, out isLocalField, out isNegatedField, out isOneWay, out isResource);
+                    
+                    // is this a binding to a resource in a resource dictionary?
+                    if (isResource)
+                    {
+                        // yes.
+                        SetResourceBinding(bindingValueObserver, sourceFieldName);
+                        continue;
+                    }
+
+                    // if the binding is defined as a local field (through the '#' notation) we are binding to a field on this view 
+                    // otherwise we are binding to our parent view
+                    var bindingView = isLocalField ? this : Parent;
+
+                    // get view field data for binding
+                    var sourceViewFieldData = bindingView.GetViewFieldData(sourceFieldName);
+                    if (sourceViewFieldData == null)
+                    {
+                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, sourceFieldName));
+                        return;
+                    }
+                    //Debug.Log(String.Format("Creating binding {0} <-> {1}", sourceViewFieldData.ViewFieldPath, viewFieldData.ViewFieldPath));
+
+                    bindingValueObserver.Sources.Add(new ViewFieldBindingSource(sourceViewFieldData, isNegatedField));
+                    sourceViewFieldData.RegisterValueObserver(bindingValueObserver);
+
+                    // handle two-way bindings
+                    if (!formatStringBinding && !isOneWay)
+                    {
+                        bindingValueObserver.BindingType = BindingType.SingleBinding;
+
+                        // create value observer for target
+                        var targetBindingValueObserver = new BindingValueObserver();
+                        targetBindingValueObserver.BindingType = BindingType.SingleBinding;
+                        targetBindingValueObserver.Target = sourceViewFieldData;
+                        targetBindingValueObserver.Sources.Add(new ViewFieldBindingSource(viewFieldData, isNegatedField));
+
+                        viewFieldData.RegisterValueObserver(targetBindingValueObserver);
+                        AddValueObserver(targetBindingValueObserver);
+
+                        // if this is a local binding and target view is the same as source view 
+                        // we need to make sure value propagation happens in an intuitive order
+                        // so that if we e.g. bind Text="{#Item.Score}" that Item.Score propagates to Text first. 
+                        if (isLocalField && viewFieldData.TargetView == bindingView)
                         {
-                            _triggeredChangeHandlers.Add(x.Key, x.Value);
+                            sourceViewFieldData.PropagateFirst = true;
                         }
                     }
                 }
             }
 
-            // init callstack
-            if (callstack == null)
-            {
-                callstack = new List<KeyValuePair<View, FieldInfo>>();
-            }
-
-            // get bounded fields
-            var fieldBindings = FieldBindings.Where(x => x.SourceViewField == classFieldInfo &&
-                x.SourceObject == obj && !callstack.Any(c => c.Key == x.TargetView && c.Value == x.TargetViewField));
-            if (fieldBindings.Any())
-            {
-                // add this field to the callstack
-                callstack.Add(new KeyValuePair<View, FieldInfo>(this, classFieldInfo));
-
-                // set value of bounded fields
-                foreach (var fieldBinding in fieldBindings)
-                {
-                    fieldBinding.PropagateValue(callstack);
-                }
-            }
-
-            if (triggerChangeHandlersImmediately)
-            {
-                TriggerChangeHandlers();
-            }
+            AddValueObserver(bindingValueObserver);
         }
 
         /// <summary>
-        /// Sets indicator indicating if value has been set.
+        /// Sets resource binding.
         /// </summary>
-        private void SetValueSetIndicator(FieldInfo classFieldInfo)
+        private void SetResourceBinding(BindingValueObserver bindingValueObserver, string sourceFieldName)
         {
-            FieldInfo setFieldInfo = GetType().GetField(classFieldInfo.Name + "Set");
-            if (setFieldInfo != null)
+            string dictionaryName = null;
+            string resourceKey = sourceFieldName;
+
+            int resourceIndex = sourceFieldName.IndexOf('.', 0);
+            if (resourceIndex > 0)
             {
-                setFieldInfo.SetValue(this, true);
+                resourceKey = sourceFieldName.Substring(resourceIndex + 1);
+                dictionaryName = sourceFieldName.Substring(0, resourceIndex);
             }
+
+            var resourceBindingSource = new ResourceBindingSource(dictionaryName, resourceKey);
+            bindingValueObserver.Sources.Add(resourceBindingSource);
+
+            // so here we want to register a resource binding observer in the dictionary
+            ResourceDictionary.RegisterResourceBindingObserver(dictionaryName, resourceKey, bindingValueObserver);
         }
 
         /// <summary>
-        /// Gets boolean indicating if a field value has changed since last frame.
+        /// Parses binding string and returns view field path.
         /// </summary>
-        public bool HasChanged<TField>(Expression<Func<TField>> field)
+        private string ParseBindingString(string binding, out bool isLocalField, out bool isNegatedField, out bool isOneWay, out bool isResource)
         {
-            // get field data from expression string
-            string expressionString = field.ToString();
-            if (!_viewFieldData.ContainsKey(expressionString))
-            {
-                var viewFieldPath = expressionString.Substring(expressionString.IndexOf(").") + 2);
-                var newViewFieldData = TypeHelper.GetViewFieldData(this, viewFieldPath);
+            isLocalField = false;
+            isNegatedField = false;
+            isOneWay = false;
+            isResource = false;
 
-                if (newViewFieldData == null)
+            var viewField = binding;
+            while (viewField.Length > 0)
+            {
+                if (viewField.StartsWith("#"))
                 {
-                    Debug.LogError(String.Format("[.377] {0}: Unable to parse SetValue lambda view field path \"{1}\".", Name, viewFieldPath));
-                    return false;
+                    isLocalField = true;
+                    viewField = viewField.Substring(1);
                 }
-
-                _viewFieldData.Add(expressionString, newViewFieldData);
-            }
-
-            var viewFieldData = _viewFieldData[expressionString];
-
-            FieldInfo classFieldInfo = viewFieldData.ClassFieldInfo;
-            FieldInfo objectFieldInfo = viewFieldData.ObjectFieldInfo;
-            object obj = viewFieldData.Object;
-
-            // if object is view, call HasChanged on it
-            if (obj is View)
-            {
-                return (obj as View).HasChanged(objectFieldInfo.Name);
-            }
-
-            return HasChanged(classFieldInfo.Name);
-        }
-
-        /// <summary>
-        /// Gets boolean indicating if a field value has changed since last frame.
-        /// </summary>
-        private bool HasChanged(string fieldName)
-        {
-            return _changedFields.Contains(fieldName);
-        }
-
-        /// <summary>
-        /// Sets boolean indicating that a field value has changed since last frame.
-        /// </summary>
-        public void SetChanged<TField>(Expression<Func<TField>> field)
-        {
-            // get field data from expression string
-            string expressionString = field.ToString();
-
-			Debug.Log("--> expressionString: " + expressionString);
-
-            if (!_viewFieldData.ContainsKey(expressionString))
-            {
-                var viewFieldPath = expressionString.Substring(expressionString.IndexOf(").") + 2);
-                var newViewFieldData = TypeHelper.GetViewFieldData(this, viewFieldPath);
-
-                if (newViewFieldData == null)
+                else if (viewField.StartsWith("!"))
                 {
-                    Debug.LogError(String.Format("[.377] {0}: Unable to parse SetValue lambda view field path \"{1}\".", Name, viewFieldPath));
-                    return;
+                    isNegatedField = true;
+                    viewField = viewField.Substring(1);
                 }
-
-                _viewFieldData.Add(expressionString, newViewFieldData);
-            }
-
-            var viewFieldData = _viewFieldData[expressionString];
-
-            FieldInfo classFieldInfo = viewFieldData.ClassFieldInfo;
-            FieldInfo objectFieldInfo = viewFieldData.ObjectFieldInfo;
-            object obj = viewFieldData.Object;
-
-            // if object is view, call SetChanged on it
-            if (obj is View)
-            {
-                (obj as View).SetValue(classFieldInfo, objectFieldInfo, obj, null, null, true, false, false);
-            }
-            else
-            {
-                SetValue(classFieldInfo, objectFieldInfo, obj, null, null, true, false, false);
-            }
-        }
-
-        /// <summary>
-        /// Updates layout and behavior of the view.
-        /// </summary>
-        public void UpdateView()
-        {
-            UpdateBehavior();
-            UpdateLayout();
-            UpdateBindings();
-            TriggerChangeHandlers();
-        }
-
-        /// <summary>
-        /// Updates the layout of the view and notifies parents of update.
-        /// </summary>
-        public void UpdateLayouts()
-        {
-            UpdateLayout();
-
-            // inform parents of update
-            gameObject.ForEachParent<View>(x => x.SetValue(() => x.ChildLayoutUpdated, true));
-        }
-
-        /// <summary>
-        /// Updates the layout of the view.
-        /// </summary>
-        public virtual void UpdateLayout()
-        {
-            Debug.Log(String.Format("{0}.UpdateLayout called", Name));
-
-            if (UpdateRectTransform)
-            {
-                var rectTransform = GetComponent<RectTransform>();
-                if (rectTransform != null)
+                else if (viewField.StartsWith("="))
                 {
-                    // update rectTransform
-                    // horizontal alignment and positioning
-                    float xMin = 0f;
-                    float xMax = 0f;
-                    float offsetMinX = 0f;
-                    float offsetMaxX = 0f;
-
-                    if (Alignment.HasFlag(Alignment.Left))
-                    {
-                        xMin = 0f;
-                        xMax = Width.Percent;
-                        offsetMinX = 0f;
-                        offsetMaxX = Width.Pixels;
-                    }
-                    else if (Alignment.HasFlag(Alignment.Right))
-                    {
-                        xMin = 1f - Width.Percent;
-                        xMax = 1f;
-                        offsetMinX = -Width.Pixels;
-                        offsetMaxX = 0f;
-                    }
-                    else
-                    {
-                        xMin = 0.5f - Width.Percent / 2f;
-                        xMax = 0.5f + Width.Percent / 2f;
-                        offsetMinX = -Width.Pixels / 2f;
-                        offsetMaxX = Width.Pixels / 2f;
-                    }
-
-                    // vertical alignment
-                    float yMin = 0f;
-                    float yMax = 0f;
-                    float offsetMinY = 0f;
-                    float offsetMaxY = 0f;
-
-                    if (Alignment.HasFlag(Alignment.Top))
-                    {
-                        yMin = 1f - Height.Percent;
-                        yMax = 1f;
-                        offsetMinY = -Height.Pixels;
-                        offsetMaxY = 0f;
-                    }
-                    else if (Alignment.HasFlag(Alignment.Bottom))
-                    {
-                        yMin = 0f;
-                        yMax = Height.Percent;
-                        offsetMinY = 0f;
-                        offsetMaxY = Height.Pixels;
-                    }
-                    else
-                    {
-                        yMin = 0.5f - Height.Percent / 2f;
-                        yMax = 0.5f + Height.Percent / 2f;
-                        offsetMinY = -Height.Pixels / 2f;
-                        offsetMaxY = Height.Pixels / 2f;
-                    }
-
-                    rectTransform.anchorMin = new Vector2(xMin, yMin);
-                    rectTransform.anchorMax = new Vector2(xMax, yMax);
-
-                    // positioning and margins
-                    rectTransform.offsetMin = new Vector2(
-                        offsetMinX + Margin.Left.Pixels + Offset.Left.Pixels - Offset.Right.Pixels + OffsetFromParent.Left.Pixels - OffsetFromParent.Right.Pixels,
-                        offsetMinY + Margin.Bottom.Pixels - Offset.Top.Pixels + Offset.Bottom.Pixels - OffsetFromParent.Top.Pixels + OffsetFromParent.Bottom.Pixels);
-                    rectTransform.offsetMax = new Vector2(
-                        offsetMaxX - Margin.Right.Pixels + Offset.Left.Pixels - Offset.Right.Pixels + OffsetFromParent.Left.Pixels - OffsetFromParent.Right.Pixels,
-                        offsetMaxY - Margin.Top.Pixels - Offset.Top.Pixels + Offset.Bottom.Pixels - OffsetFromParent.Top.Pixels + OffsetFromParent.Bottom.Pixels);
-
-                    rectTransform.anchoredPosition = new Vector2(
-                        rectTransform.offsetMin.x / 2.0f + rectTransform.offsetMax.x / 2.0f,
-                        rectTransform.offsetMin.y / 2.0f + rectTransform.offsetMax.y / 2.0f);
-
-                    // pivot
-                    rectTransform.pivot = Pivot;
+                    isOneWay = true;
+                    viewField = viewField.Substring(1);
                 }
-            }
-
-            // reset child-update flag
-            ChildLayoutUpdated = false;
-        }
-
-        /// <summary>
-        /// Updates the behavior and visual appearance of the view.
-        /// </summary>
-        public virtual void UpdateBehavior()
-        {
-            Debug.Log(String.Format("{0}.UpdateBehavior called", Name));
-
-            gameObject.hideFlags = HideFlags;
-
-            // background image and color
-            if (UpdateBackground)
-            {
-                SetBackground();
-            }
-
-            // set gameObject name to Id if set
-            if (!String.IsNullOrEmpty(Id))
-            {
-                name = Id;
-                Name = Id;
-            }
-
-            // set alpha
-            var canvasGroup = GetComponent<CanvasGroup>();
-            if (Enabled && canvasGroup != null)
-            {
-                if (canvasGroup.blocksRaycasts == false)
+                else if (viewField.StartsWith("@"))
                 {
-                    // enabled has changed, trigger action
-                    EnabledChanged.Trigger(new EnabledChangedActionData { Enabled = true });
-                }
-
-                canvasGroup.alpha = AlphaSet ? Alpha : 1;
-                canvasGroup.blocksRaycasts = true;
-                canvasGroup.interactable = true;
-            }
-
-            if (!Enabled)
-            {
-                if (canvasGroup == null)
-                {
-                    canvasGroup = gameObject.AddComponent<CanvasGroup>();
-                }
-                else if (canvasGroup.blocksRaycasts == true)
-                {
-                    // enabled has changed, trigger action
-                    EnabledChanged.Trigger(new EnabledChangedActionData { Enabled = false });
-                }
-
-                canvasGroup.alpha = 0;
-                canvasGroup.blocksRaycasts = false;
-                canvasGroup.interactable = false;
-            }
-
-            if (AlphaSet)
-            {                
-                if (canvasGroup == null)
-                {
-                    canvasGroup = gameObject.AddComponent<CanvasGroup>();
-                }
-                                
-                if (Enabled)
-                {
-                    canvasGroup.alpha = Alpha;
-                    canvasGroup.blocksRaycasts = Alpha > 0;
-                    canvasGroup.interactable = Alpha > 0;
-                }
-            }
-
-            // update scale and rotation
-            if (UpdateRectTransform)
-            {
-                var rectTransform = GetComponent<RectTransform>();
-                if (rectTransform != null)
-                {
-                    if (ScaleSet)
-                    {
-                        rectTransform.localScale = Scale;
-                    }
-
-                    if (RotationSet)
-                    {
-                        rectTransform.rotation = Quaternion.Euler(Rotation);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sets background image and color.
-        /// </summary>
-        protected void SetBackground()
-        {
-            SetBackground(null, null, Color.clear, false);
-        }
-
-        /// <summary>
-        /// Sets background image and color.
-        /// </summary>
-        protected void SetBackground(Sprite inBackgroundImage, Material inBackgroundMaterial, Color inBackgroundColor, bool inBackgroundColorSet)
-        {
-            var image = GetComponent<UnityEngine.UI.Image>();
-            if (image != null)
-            {
-                var backgroundImage = inBackgroundImage != null ? inBackgroundImage : BackgroundImage;
-                var backgroundMaterial = inBackgroundMaterial != null ? inBackgroundMaterial : BackgroundMaterial;
-                var backgroundColor = inBackgroundColorSet ? inBackgroundColor : BackgroundColor;
-                var backgroundColorSet = inBackgroundColorSet ? true : BackgroundColorSet;
-
-                if (backgroundImage != null)
-                {
-                    image.sprite = backgroundImage;
-                    image.type = BackgroundImageType;
-                    image.color = backgroundColorSet ? backgroundColor : Color.white;
+                    isResource = true;
+                    viewField = viewField.Substring(1);
                 }
                 else
                 {
-                    image.color = backgroundColorSet ? backgroundColor : Color.clear;
+                    break;
                 }
-
-                if (backgroundMaterial != null)
-                {
-                    image.material = backgroundMaterial;
-                }
-
-                // if image color is clear disable image component
-                image.enabled = AlwaysBlockRaycast ? true : image.color.a > 0;
-                image.preserveAspect = PreserveAspect;
             }
+
+            return viewField;
         }
 
         /// <summary>
-        /// Returns embedded XML for view.
+        /// Sets view action entry.
         /// </summary>
-        public virtual string GetEmbeddedXml()
+        public void SetViewActionEntry(ViewActionEntry entry)
         {
-            return String.Empty;
-        }
-
-        /// <summary>
-        /// Updates the view. Called once per frame in reverse breadth-first order.
-        /// </summary>
-        public virtual void LateUpdate()
-        {
-            TriggerChangeHandlers();
-        }
-
-        /// <summary>
-        /// Called once per frame or when a view gets deactivated (because LateUpdate() isn't called on inactive game objects).
-        /// </summary>
-        public void TriggerChangeHandlers()
-        {
-            if (_triggeredChangeHandlers.Count > 0)
+            // get view field data for binding target
+            var viewFieldData = GetViewFieldData(entry.ViewActionFieldName);
+            if (viewFieldData == null)
             {
-                // call changed field handlers
-                foreach (var triggeredHandler in _triggeredChangeHandlers.Values)
-                {
-                    Debug.Log(String.Format("Triggered change handler \"{0}.{1}\".", Name, triggeredHandler.Name));
-                    triggeredHandler.Invoke(this, null);
-                }
-
-                _triggeredChangeHandlers.Clear();
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign view action handler \"{1}.{2}()\" to view action \"{3}\". View action not found.", GameObjectName, Parent.ViewTypeName, entry.ViewActionHandlerName, entry.ViewActionFieldName));
+                return;
             }
 
-            if (_changedFields.Count > 0)
+            bool hasValue;
+            entry.SourceView = viewFieldData.SourceView;
+            ViewAction viewAction = viewFieldData.GetValue(out hasValue) as ViewAction;
+            if (hasValue)
             {
-                _changedFields.Clear();
+                viewAction.AddEntry(entry);
             }
         }
 
         /// <summary>
-        /// Initializes the view and its children.
+        /// Sets state value.
         /// </summary>
-        public void InitializeViews()
+        private void SetStateValue(ViewFieldStateValue stateValue)
         {
-            InitializeInternal();
-            Initialize();
-            this.ForEachChild<View>(x => { x.InitializeInternal(); x.Initialize(); });
+            if (!_stateValues.ContainsKey(stateValue.State))
+            {
+                _stateValues.Add(stateValue.State, new Dictionary<string, ViewFieldStateValue>());
+            }
+
+            var currentStateValues = _stateValues[stateValue.State];
+            if (!currentStateValues.ContainsKey(stateValue.ViewFieldPath))
+            {
+                currentStateValues.Add(stateValue.ViewFieldPath, stateValue);
+            }
+            else
+            {
+                currentStateValues[stateValue.ViewFieldPath] = stateValue;
+            }
         }
 
         /// <summary>
-        /// Updates the view and its children (reverse breadth first).
+        /// Sets field set-value to true.
         /// </summary>
-        public void UpdateViews()
+        private void SetViewFieldSetValue(string viewFieldPath)
         {
-            this.ForEachChild<View>(x => x.UpdateView(), true, null, SearchAlgorithm.ReverseBreadthFirst);
-            UpdateView();
+            _setViewFields.Add(viewFieldPath);
         }
 
         /// <summary>
-        /// Initializes the view. Called automatically by the view engine Awake() unless the view is created dynamically.
+        /// Sets view field change handler.
+        /// </summary>
+        private void SetChangeHandler(ViewFieldChangeHandler changeHandler)
+        {
+            // get view field data for change handler
+            var viewFieldData = GetViewFieldData(changeHandler.ViewField);
+            if (viewFieldData == null)
+            {
+                return;
+            }
+
+            // create change handler observer
+            var changeHandlerObserver = new ChangeHandlerValueObserver(this, changeHandler.ChangeHandlerName, changeHandler.TriggerImmediately);
+            if (changeHandlerObserver.IsValid)
+            {
+                viewFieldData.RegisterValueObserver(changeHandlerObserver);
+                AddValueObserver(changeHandlerObserver);
+            }
+            else
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign view change handler \"{1}()\" for view field \"{2}\". Change handler method not found.", GameObjectName, changeHandler.ChangeHandlerName, changeHandler.ViewField));
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Gets mapped view field from expression.
+        /// </summary>
+        protected string GetMappedViewField<TField>(Expression<Func<TField>> expression)
+        {
+            // get mapped view field           
+            string expressionString = expression.ToString();
+            string mappedViewField = _expressionViewField.Get(expressionString);
+            if (mappedViewField == null)
+            {
+                // add expression
+                mappedViewField = expressionString.Substring(expressionString.IndexOf(").") + 2);
+                _expressionViewField.Add(expressionString, mappedViewField);
+            }
+
+            return mappedViewField;
+        }
+
+        /// <summary>
+        /// Gets value from view field.
+        /// </summary>
+        protected object GetValue<TField>(Expression<Func<TField>> expression)
+        {
+            return GetValue(GetMappedViewField(expression));
+        }
+
+        /// <summary>
+        /// Gets value from view field.
+        /// </summary>
+        public object GetValue(string viewField)
+        {
+            bool hasValue;
+            return GetValue(viewField, out hasValue);
+        }
+
+        /// <summary>
+        /// Gets value from view field.
+        /// </summary>
+        public object GetValue(string viewField, out bool hasValue)
+        {
+            // get view field data            
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
+            {
+                hasValue = false;
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to get value from view field \"{1}\". View field not found.", GameObjectName, viewField));
+                return null;
+            }
+
+            try
+            {
+                return viewFieldData.GetValue(out hasValue);
+            }
+            catch (Exception e)
+            {
+                hasValue = false;
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to get value from view field \"{1}\". Exception thrown: {2}", GameObjectName, viewField, Utils.GetError(e)));
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets boolean indicating if value has been set on view field.
+        /// </summary>
+        public bool IsSet<TField>(Expression<Func<TField>> expression)
+        {
+            return IsSet(GetMappedViewField(expression));
+        }
+
+        /// <summary>
+        /// Gets boolean indicating if value has been set on view field.
+        /// </summary>
+        public bool IsSet(string viewField)
+        {
+            // get view field data
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to get set-value from view field \"{1}\". View field not found.", GameObjectName, viewField));
+                return false;
+            }
+
+            return viewFieldData.IsSet();
+        }
+
+        /// <summary>
+        /// Initializes internal values to default values. Called once before InitializeInternal(). Called in depth-first order.
+        /// </summary>
+        public virtual void InitializeInternalDefaultValues()
+        {
+            // initialize lists and dictionaries
+            _viewFieldData = new Dictionary<string, ViewFieldData>();
+            _stateValues = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
+            _stateAnimations = new Dictionary<string, Dictionary<string, StateAnimation>>();
+            _setViewFields = new HashSet<string>();
+            _valueObservers = new List<ValueObserver>();
+            _changeHandlers = new HashSet<string>();
+            _changeHandlerMethods = new Dictionary<string, MethodInfo>();
+            _expressionViewField = new Dictionary<string, string>();
+            _eventSystemViewActions = new List<ViewAction>();
+            _previousState = State;
+            _isDefaultState = State == DefaultStateName;
+        }
+
+        /// <summary>
+        /// Initializes the view internally. Called once before Initialize(). Called in depth-first order.
+        /// </summary>
+        public virtual void InitializeInternal()
+        {
+            // initialize bindings
+            foreach (var binding in ViewFieldBindings)
+            {
+                SetBinding(binding.ViewField, binding.BindingString);
+            }
+
+            // initialize state values
+            foreach (var stateValue in ViewFieldStateValues)
+            {
+                SetStateValue(stateValue);
+            }
+
+            // initialize set-fields
+            foreach (var setField in SetViewFieldNames)
+            {
+                SetViewFieldSetValue(setField);
+            }
+
+            // initialize action handlers
+            foreach (var actionEntry in ViewActionEntries)
+            {
+                SetViewActionEntry(actionEntry);
+            }
+
+            // initialize change handlers
+            var viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+            foreach (var changeHandler in viewTypeData.ViewFieldChangeHandlers)
+            {
+                SetChangeHandler(changeHandler);
+            }
+
+            // initialize system event triggers
+            _eventSystemViewActions = new List<ViewAction>();
+            foreach (var viewActionField in viewTypeData.ViewActionFields)
+            {
+                // get view action field data
+                var viewFieldData = GetViewFieldData(viewActionField);
+
+                bool hasValue;
+                ViewAction viewAction = viewFieldData.GetValue(out hasValue) as ViewAction;
+                if (viewAction != null && viewAction.TriggeredByEventSystem)
+                {
+                    _eventSystemViewActions.Add(viewAction);
+                }
+            }
+
+            InitEventSystemTriggers();
+        }
+
+        /// <summary>
+        /// Initializes unity event triggers.
+        /// </summary>
+        internal void InitEventSystemTriggers()
+        {
+            if (!_eventSystemViewActions.Any())
+            {
+#if UNITY_4_6 || UNITY_5_0
+                _eventSystemTriggersInitialized = true;
+#endif
+                return;
+            }
+
+            EventTrigger eventTrigger = GetComponent<EventTrigger>();
+            if (eventTrigger == null)
+            {
+                eventTrigger = gameObject.AddComponent<EventTrigger>();
+            }
+
+#if UNITY_4_6 || UNITY_5_0
+            var triggers = eventTrigger.delegates;
+#else
+            var triggers = eventTrigger.triggers;
+#endif
+            if (triggers == null)
+            {
+#if UNITY_4_6 || UNITY_5_0
+                eventTrigger.delegates = new List<EventTrigger.Entry>();
+#endif
+                return;
+            }
+
+            triggers.Clear();
+
+            foreach (var viewAction in _eventSystemViewActions)
+            {
+                var entry = new EventTrigger.Entry();
+                entry.eventID = viewAction.EventTriggerType;
+                entry.callback = new EventTrigger.TriggerEvent();
+
+                var eventViewAction = viewAction;
+                var action = new UnityAction<BaseEventData>(eventData => eventViewAction.Trigger(eventData));
+                entry.callback.AddListener(action);
+
+                triggers.Add(entry);
+            }
+
+#if UNITY_4_6 || UNITY_5_0
+            _eventSystemTriggersInitialized = true;
+#endif
+        }
+
+        /// <summary>
+        /// Called once to initialize the view. Called in reverse breadth-first order.
         /// </summary>
         public virtual void Initialize()
         {
         }
 
         /// <summary>
-        /// Initializes the view. Called automatically by the view engine Awake() unless the view is created dynamically.
+        /// Gets view field data.
         /// </summary>
-        internal void InitializeInternal()
+        public ViewFieldData GetViewFieldData(string viewField, int depth = int.MaxValue)
         {
-            // hook up event system triggers
-            var eventTrigger = GetComponent<EventTrigger>();
-            if (eventTrigger != null)
+            // get mapped view field
+            var viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+            var mappedViewField = viewTypeData.GetMappedViewField(viewField);
+
+            if (_viewFieldData == null)
             {
-#if UNITY_4_6 || UNITY_5_0
-                var triggers = eventTrigger.delegates;
-#else
-                var triggers = eventTrigger.triggers;
-#endif                
+                _viewFieldData = new Dictionary<string, ViewFieldData>();
+            }
 
-                if (triggers != null)
+            // is there data for this field?
+            var fieldData = _viewFieldData.Get(mappedViewField);
+            if (fieldData == null)
+            {
+                // no. create new field data
+                fieldData = ViewFieldData.FromViewFieldPath(this, mappedViewField);
+                if (fieldData != null)
                 {
-                    triggers.Clear();
-                    foreach (var viewAction in ViewActions.Where(a => a.TriggeredByEventSystem))
+                    _viewFieldData.Add(mappedViewField, fieldData);
+                }
+            }
+
+            // are we the owner of this field?
+            if (fieldData != null && !fieldData.IsOwner && depth > 0)
+            {
+                // no. go deeper if we can
+                var targetView = fieldData.GetTargetView();
+                if (targetView != null)
+                {
+                    fieldData = targetView.GetViewFieldData(fieldData.TargetViewFieldPath, --depth);
+                }
+            }
+
+            return fieldData;
+        }
+
+        /// <summary>
+        /// Called once at the end of a frame. Triggers queued change handlers.
+        /// </summary>
+        public void LateUpdate()
+        {
+            TriggerChangeHandlers();
+
+#if UNITY_4_6 || UNITY_5_0
+            if (!_eventSystemTriggersInitialized)
+            {
+                InitEventSystemTriggers();
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Triggers queued change handlers.
+        /// </summary>
+        public void TriggerChangeHandlers()
+        {
+            if (_changeHandlers.Count > 0)
+            {
+                var triggeredChangeHandlers = new List<string>(_changeHandlers);
+                _changeHandlers.Clear();
+
+                foreach (var changeHandler in triggeredChangeHandlers)
+                {
+                    try
                     {
-                        var entry = new EventTrigger.Entry();
-                        entry.eventID  = viewAction.EventTriggerType;
-                        entry.callback = new EventTrigger.TriggerEvent();
+                        _changeHandlerMethods[changeHandler].Invoke(this, null);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(String.Format("[NUXML] {0}: Exception thrown in change handler \"{1}\": {2}", GameObjectName, changeHandler, Utils.GetError(e)));
+                    }
+                }
+            }
+        }
 
-                        var eventViewAction = viewAction;
-                        var action = new UnityAction<BaseEventData>(eventData => eventViewAction.Trigger(eventData));
-                        entry.callback.AddListener(action);
+        /// <summary>
+        /// Called once to propagate bound values. Called in breadth-first order.
+        /// </summary>
+        public void PropagateBindings()
+        {
+            foreach (var viewFieldData in _viewFieldData.Values.OrderByDescending(x => x.PropagateFirst))
+            {
+                viewFieldData.NotifyBindingValueObservers(new HashSet<ViewFieldData>());
+            }
+        }
 
-                        triggers.Add(entry);
+        /// <summary>
+        /// Called once to queue all change handlers. Called in reverse breadth-first order.
+        /// </summary>
+        public void QueueAllChangeHandlers()
+        {
+            var _viewFieldDataList = new List<ViewFieldData>(_viewFieldData.Values);                        
+            foreach (var viewFieldData in _viewFieldDataList)
+            {
+                viewFieldData.NotifyChangeHandlerValueObservers(new HashSet<ViewFieldData>());
+            }
+        }
+
+        /// <summary>
+        /// Adds a value observer to the view.
+        /// </summary>
+        internal void AddValueObserver(ValueObserver valueObserver)
+        {
+            _valueObservers.Add(valueObserver);
+        }
+
+        /// <summary>
+        /// Adds a binding to the view field that will be processed when the view is initialized.
+        /// </summary>
+        internal void AddBinding(string viewField, string bindingString)
+        {
+            ViewFieldBindings.Add(new ViewFieldBinding { ViewField = viewField, BindingString = bindingString });
+        }
+
+        /// <summary>
+        /// Adds field field state value.
+        /// </summary>
+        internal void AddStateValue(string state, string viewField, string value, ValueConverterContext context, bool isSubState)
+        {
+            // convert value to ensure that assets that can only be loaded in the editor is cached by the view-presenter, the caching is done by the value converter
+            var viewFieldData = GetViewFieldData(viewField);
+            if (viewFieldData == null)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Unable to set state value \"{1}-{2}\". View field \"{2}\" not found.", GameObjectName, state, viewField));
+                return;
+            }
+
+            if (viewFieldData.ValueConverter != null)
+            {
+                viewFieldData.ValueConverter.Convert(value, context != null ? context : ValueConverterContext.Default);
+            }
+
+            // set state value
+            if (isSubState)
+            {
+                // only go down one level
+                var subViewFieldData = GetViewFieldData(viewField, 1);
+                subViewFieldData.SourceView.AddStateValue(state, subViewFieldData.ViewFieldPath, value, context, false);
+            }
+            else
+            {
+                // get mapped view-field path
+                var viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+                var mappedViewField = viewTypeData.GetMappedViewField(viewField);
+
+                // overwrite state value if it exist otherwise create a new one 
+                var stateValue = ViewFieldStateValues.FirstOrDefault(x => x.State == state && x.ViewFieldPath == mappedViewField);
+                if (stateValue != null)
+                {
+                    stateValue.Value = value;
+                    stateValue.ValueConverterContext = context;
+                }
+                else
+                {
+                    ViewFieldStateValues.Add(new ViewFieldStateValue
+                    {
+                        State = state,
+                        ViewFieldPath = mappedViewField,
+                        Value = value,
+                        ValueConverterContext = context
+                    });
+
+                    // for every state value we need to store the default value so we can revert back to it
+                    var defaultStateValue = ViewFieldStateValues.FirstOrDefault(x => x.State == DefaultStateName && x.ViewFieldPath == mappedViewField);
+                    if (defaultStateValue == null)
+                    {
+                        ViewFieldStateValues.Add(new ViewFieldStateValue
+                        {
+                            State = DefaultStateName,
+                            ViewFieldPath = mappedViewField,
+                            ValueConverterContext = ValueConverterContext.Empty,
+                            DefaultValueNotSet = true
+                        });
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds a view action handler for a certain view action.
+        /// </summary>
+        internal void AddViewActionEntry(string viewActionFieldName, string viewActionHandlerName, View parent)
+        {
+            ViewActionEntries.Add(new ViewActionEntry { ParentView = parent, ViewActionFieldName = viewActionFieldName, ViewActionHandlerName = viewActionHandlerName });
+        }
+
+        /// <summary>
+        /// Adds a state animation to the view.
+        /// </summary>
+        internal void AddStateAnimation(StateAnimation stateAnimation)
+        {
+            if (String.IsNullOrEmpty(stateAnimation.From))
+                return;
+
+            if (!_stateAnimations.ContainsKey(stateAnimation.From))
+            {
+                _stateAnimations.Add(stateAnimation.From, new Dictionary<string, StateAnimation>());
+            }
+
+            _stateAnimations[stateAnimation.From].Add(stateAnimation.To, stateAnimation);
+        }
+
+        /// <summary>
+        /// Gets state animation.
+        /// </summary>
+        internal StateAnimation GetStateAnimation(string from, string to)
+        {
+            // check if animation exist between states From -> To
+            if (_stateAnimations.ContainsKey(from) &&
+                _stateAnimations[from].ContainsKey(to))
+            {
+                return _stateAnimations[from][to];
+            }
+
+            // check if animation exist between states Any -> To
+            if (_stateAnimations.ContainsKey(AnyStateName) &&
+                _stateAnimations[AnyStateName].ContainsKey(to))
+            {
+                return _stateAnimations[AnyStateName][to];
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Queues change handler to be called at the end of the frame.
+        /// </summary>
+        internal void QueueChangeHandler(string name)
+        {
+            _changeHandlers.Add(name);
+            if (!_changeHandlerMethods.ContainsKey(name))
+            {
+                _changeHandlerMethods.Add(name, GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
+            }
+        }
+
+        /// <summary>
+        /// Called after the view is initialized but before any XUML values are set. Used to set default values on the view.
+        /// </summary>
+        public virtual void SetDefaultValues()
+        {
+            ViewTypeName = GetType().Name;
+            GameObject = gameObject;
+            State.DirectValue = DefaultStateName;
+            IsActive.DirectValue = true;
+        }
+
+        /// <summary>
+        /// Called when a field affecting the layout of the view has changed and that change is to be propagated to parents.
+        /// </summary>
+        public virtual void LayoutsChanged()
+        {
+            QueueChangeHandler("LayoutChanged");
+
+            // inform parents of update
+            this.ForEachParent<View>(x => x.QueueChangeHandler("ChildLayoutChanged"));
+        }
+
+        /// <summary>
+        /// Called when a child layout has been changed.
+        /// </summary>
+        public virtual void ChildLayoutChanged()
+        {
+        }
+
+        /// <summary>
+        /// Called when a field affecting the layout of the view has changed.
+        /// </summary>
+        public virtual void LayoutChanged()
+        {            
+            //Debug.Log(ViewTypeName + ": LayoutChanged called");
+        }
+
+        /// <summary>
+        /// Called when a field affecting the behavior and visual appearance of the view has changed.
+        /// </summary>
+        public virtual void BehaviorChanged()
+        {
+        }
+
+        /// <summary>
+        /// Called when the Id of the view changes.
+        /// </summary>
+        public virtual void IdChanged()
+        {
+            // set gameObject name to Id if set
+            gameObject.name = GameObjectName;
+        }
+
+        /// <summary>
+        /// Called when IsActive field has been changed.
+        /// </summary>
+        public virtual void IsActiveChanged()
+        {
+            gameObject.SetActive(IsActive.Value);
+
+            if (IsActive.Value)
+            {
+                Activated.Trigger();
+            }
+            else
+            {
+                Deactivated.Trigger();
+            }
+        }
+
+        /// <summary>
+        /// Called when view state has been changed.
+        /// </summary>
+        public virtual void StateChanged()
+        {
+            // stop previous animation if active and get new state animation
+            if (_stateAnimation != null && !_stateAnimation.IsAnimationCompleted)
+            {
+                _stateAnimation.StopAnimation();
+            }
+            _stateAnimation = GetStateAnimation(_previousState, State);
+
+            // if we are changing from default state we need to make sure all default state values has been set
+            if (_isDefaultState)
+            {
+                var defaultStateValues = _stateValues.Get(DefaultStateName);
+                if (defaultStateValues != null) // no state values set nothing to do
+                {
+                    foreach (var stateValue in defaultStateValues.Values)
+                    {
+                        if (stateValue.DefaultValueNotSet)
+                        {
+                            // get view field data
+                            var viewFieldData = GetViewFieldData(stateValue.ViewFieldPath);
+                            if (viewFieldData == null)
+                            {
+                                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign default state value to view field \"{1}\". View field not found.", GameObjectName, stateValue.ViewFieldPath));
+                            }
+                            else
+                            {
+                                // set default value
+                                var value = GetValue(stateValue.ViewFieldPath);
+                                stateValue.SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
+                            }
+                        }
                     }
                 }
             }
 
-            // init field change handlers
-            InitFieldChangeHandlers();
-        }
+            _isDefaultState = State == DefaultStateName;
+            _previousState = State;
 
-        /// <summary>
-        /// Creates a view of specified type.
-        /// </summary>
-        public static T CreateView<T>(GameObject layoutParent, View parent, string style = null) where T : View
-        {
-            // find view template
-            Type viewType = typeof(T);
-            var viewTemplate = parent.ParentViewPresenter.GetViewTemplate(viewType, style);
-
-            if (viewTemplate == null)
+            // get state values
+            var currentStateValues = _stateValues.Get(State);
+            if (currentStateValues == null)
             {
-                Debug.LogError(String.Format("[.309] CreateView<{0}>() called for view type that has no template. Are you a missing a [CreatesView(typeof({0}))] attribute on the view?", viewType.Name));
-                return null;
+                return; // no state values set, nothing to do
             }
 
-            return CreateViewFromTemplate(viewTemplate, layoutParent, parent) as T;
+            // go through state values and update view values
+            foreach (var stateValue in currentStateValues.Values)
+            {
+                if (_stateAnimation != null)
+                {
+                    // is this view field animated?
+                    var animators = _stateAnimation.GetFieldAnimators(stateValue.ViewFieldPath);
+                    if (animators != null)
+                    {
+                        var animateTo = stateValue.GetValue();
+
+                        // yes. set target value of animations
+                        foreach (var animator in animators)
+                        {
+                            if (animateTo is String)
+                            {
+                                animator.ToStringValue = (String)animateTo;
+                            }
+                            else
+                            {
+                                animator.To = animateTo;
+                            }
+
+                            animator.UpdateViewFieldAnimator();
+                        }
+
+                        continue;
+                    }
+                }
+
+                // set view value to state value
+                var value = SetValue(stateValue.ViewFieldPath, stateValue.GetValue(), false, null, stateValue.ValueConverterContext, true);
+                stateValue.SetValue(value); // store converted value to save conversion time
+            }
+
+            if (_stateAnimation != null)
+            {
+                // start state animation
+                _stateAnimation.StartAnimation();
+            }
         }
 
         /// <summary>
-        /// Creates a view from specified template.
+        /// Activates the view.
         /// </summary>
-        public static View CreateViewFromTemplate(GameObject template, GameObject layoutParent, View parent)        
+        public void Activate()
+        {
+            IsActive.Value = true;
+        }
+
+        /// <summary>
+        /// Activates the view and sends data to it.
+        /// </summary>
+        public void Activate(object data)
+        {
+            IsActive.DirectValue = true;
+            gameObject.SetActive(true);
+            Activated.Trigger(data);
+        }
+
+        /// <summary>
+        /// Deactivates the view.
+        /// </summary>
+        public void Deactivate()
+        {
+            IsActive.Value = false;
+        }
+
+        /// <summary>
+        /// Changes the state of the view.
+        /// </summary>
+        public virtual void SetState(string state)
+        {
+            State.Value = state;
+        }
+
+        /// <summary>
+        /// Creates a child view of specified type.
+        /// </summary>
+        public T CreateView<T>(int siblingIndex = -1, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
+        {
+            var view = ViewData.CreateView<T>(this, this, context, themeName, Id, style);
+
+            // set view sibling index
+            if (siblingIndex > 0)
+            {
+                view.GameObject.transform.SetSiblingIndex(siblingIndex);
+            }
+
+            view.IsDynamic.DirectValue = true;
+            return view;           
+        }
+
+        /// <summary>
+        /// Creates a view from a template and adds it to a parent at specified index.
+        /// </summary>
+        public static T CreateView<T>(T template, View layoutParent, int siblingIndex = -1) where T : View
         {
             // instantiate template
-            var go = Instantiate(template) as GameObject;
-
-            // make the item temporary
-            go.hideFlags = HideFlags.DontSave;
+            var go = Instantiate(template.gameObject) as GameObject;            
+            go.hideFlags = UnityEngine.HideFlags.None;
 
             // set layout parent
             go.transform.SetParent(layoutParent.transform, false);
-            var rectTransform = go.GetComponent<RectTransform>();
-            rectTransform.Reset();
 
             // set view parent
-            var view = go.GetComponent<View>();
-            view.Parent = parent != null ? parent.gameObject : null;
-            view.IsDynamic = true;
-            go.name = view.Name;
+            var view = go.GetComponent<T>();
+            if (siblingIndex > 0)
+            {
+                go.transform.SetSiblingIndex(siblingIndex);
+            }
 
+            view.IsTemplate.DirectValue = false;
+            view.IsDynamic.DirectValue = true;
             return view;
         }
 
         /// <summary>
-        /// Creates view from prefab.
+        /// Creates a child view from a template.
         /// </summary>
-        /// <param name="viewPrefab">View prefab.</param>
-        /// <param name="layoutParent">Parent in layout.</param>
-        /// <param name="parent">View parent.</param>
-        private static GameObject CreateView(Transform viewPrefab, GameObject layoutParent, View parent)
+        public T CreateView<T>(T template, int siblingIndex = -1) where T : View
         {
-            // instantiate the template
-            var transform = Instantiate(viewPrefab) as Transform;
-            var go = transform.gameObject;
-
-            // make the item temporary
-            go.hideFlags = HideFlags.DontSave;
-
-            // set layout parent
-            go.transform.SetParent(layoutParent.transform, false);
-            var rectTransform = go.GetComponent<RectTransform>();
-            rectTransform.Reset();
-
-            // set view parent
-            var view = go.GetComponent<View>();
-            view.Parent = parent != null ? parent.gameObject : null;
-            view.IsDynamic = true;
-            go.name = view.Name;
-
-            // initialize view
-            view.InitializeViews();
-            view.UpdateViews();
-
-            return go;
+            return CreateView(template, this, siblingIndex);
         }
 
         /// <summary>
-        /// Initializes field change handlers.
+        /// Notifies all value observers that are dependent on the specified field. E.g. when field "Name" changes, value observers on "Name.FirstName"
+        /// and "Name.LastName" are notified in this method. 
         /// </summary>
-        private void InitFieldChangeHandlers()
+        public void NotifyDependentValueObservers(string viewFieldPath, bool includeViewField = false)
         {
-            _changeHandlers.Clear();
-            foreach (var fieldChangeHandler in FieldChangeHandlers)
+            foreach (var viewFieldData in _viewFieldData.Values)
             {
-                if (fieldChangeHandler.FieldInfo == null)
-                {
-                    Debug.LogError(String.Format("[.310] {0}: Field \"{1}\" missing for field change handler \"{2}\".", Name, fieldChangeHandler.FieldName, fieldChangeHandler.ChangeHandlerName));
+                if (!viewFieldData.IsOwner)
                     continue;
+
+                if (includeViewField && viewFieldData.ViewFieldPath == viewFieldPath)
+                {
+                    viewFieldData.NotifyValueObservers(new HashSet<ViewFieldData>());
                 }
 
-                if (!_changeHandlers.ContainsKey(fieldChangeHandler.FieldInfo.Name))
+                if (viewFieldData.ViewFieldPathInfo.Dependencies.Count > 0 &&
+                    viewFieldData.ViewFieldPathInfo.Dependencies.Contains(viewFieldPath))
                 {
-                    _changeHandlers.Add(fieldChangeHandler.FieldInfo.Name, new Dictionary<string, MethodInfo>());
-                }
-
-                if (fieldChangeHandler.ChangeHandler != null)
-                {
-                    if (!_changeHandlers[fieldChangeHandler.FieldInfo.Name].ContainsKey(fieldChangeHandler.ChangeHandlerName))
-                    {
-                        _changeHandlers[fieldChangeHandler.FieldInfo.Name].Add(fieldChangeHandler.ChangeHandlerName, fieldChangeHandler.ChangeHandler);
-                    }
+                    viewFieldData.NotifyValueObservers(new HashSet<ViewFieldData>());
                 }
             }
         }
 
         /// <summary>
-        /// Activates view.
+        /// Moves the view to another view.
         /// </summary>
-        public void Activate(bool immediate = false)
+        public void MoveTo(View target, int childIndex = -1)
         {
-            if (immediate)
+            transform.SetParent(target.transform, false);
+            if (childIndex >= 0)
             {
-                // set alpha
-                var canvasGroup = GetComponent<CanvasGroup>();
-                if (canvasGroup != null)
-                {
-                    canvasGroup.alpha = AlphaSet ? Alpha : 1;
-                    canvasGroup.blocksRaycasts = true;
-                    canvasGroup.interactable = true;
-                }
-
-                EnabledChanged.Trigger(new EnabledChangedActionData { Enabled = true });
+                transform.SetSiblingIndex(childIndex);
             }
 
-            SetValue(() => Enabled, true);
+            SetValue(() => LayoutParent, target);
         }
 
         /// <summary>
-        /// Deactivates view. Turns off the renderer.
+        /// Initializes this view and all children. Used if the view is created dynamically and need to be called once to propertly initialize the view.
         /// </summary>
-        public void Deactivate(bool immediate = false)
+        public void InitializeViews()
         {
-            if (immediate)
-            {
-                // set alpha
-                var canvasGroup = GetComponent<CanvasGroup>();
-                if (canvasGroup == null)
-                {
-                    canvasGroup = gameObject.AddComponent<CanvasGroup>();
-                }
-
-                canvasGroup.alpha = 0;
-                canvasGroup.blocksRaycasts = false;
-                canvasGroup.interactable = false;
-
-                EnabledChanged.Trigger(new EnabledChangedActionData { Enabled = false });
-            }
-
-            SetValue(() => Enabled, false);
+            ViewPresenter.Instance.InitializeViews(this);
         }
 
         /// <summary>
-        /// Update bindings.
+        /// Adds view field path to list of set view fields.
         /// </summary>
-        internal void UpdateBindings()
+        internal void AddIsSetField(string viewFieldPath)
         {
-            foreach (var fieldBinding in FieldBindings)
+            if (!SetViewFieldNames.Contains(viewFieldPath))
             {
-                fieldBinding.Initialize();
+                SetViewFieldNames.Add(viewFieldPath);
+            }
 
-                if (fieldBinding.Update)
-                {
-                    // propagate value from source to target
-                    fieldBinding.PropagateValue();
-                }
+            if (_setViewFields != null)
+            {
+                _setViewFields.Add(viewFieldPath);
             }
         }
-             
+
+        /// <summary>
+        /// Gets bool indicating if set field is in list of set fields.
+        /// </summary>
+        internal bool GetIsSetFieldValue(string viewFieldPath)
+        {
+            if (_setViewFields != null)
+            {
+                return _setViewFields.Contains(viewFieldPath);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Calls InitializeInternalDefaultValues() and catches and prints any exception thrown.
+        /// </summary>
+        internal void TryInitializeInternalDefaultValues()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                InitializeInternalDefaultValues();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: InitializeInternalDefaultValues() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            InitializeInternalDefaultValues();
+#endif 
+        }
+
+        /// <summary>
+        /// Calls InitializeInternalDefaultValues() and catches and prints any exception thrown if define is set.
+        /// </summary>
+        internal void TryInitializeInternal()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                InitializeInternal();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: InitializeInternal() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            InitializeInternal();
+#endif 
+        }
+
+        /// <summary>
+        /// Calls Initialize() and catches and prints any exception thrown.
+        /// </summary>
+        internal void TryInitialize()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                Initialize();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: Initialize() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            Initialize();
+#endif 
+        }
+
+        /// <summary>
+        /// Calls PropagateBindings() and catches and prints any exception thrown.
+        /// </summary>
+        internal void TryPropagateBindings()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                PropagateBindings();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: PropagateBindings() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            PropagateBindings();
+#endif
+        }
+
+        /// <summary>
+        /// Calls QueueAllChangeHandlers() and catches and prints any exception thrown.
+        /// </summary>
+        internal void TryQueueAllChangeHandlers()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                QueueAllChangeHandlers();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: QueueAllChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            QueueAllChangeHandlers();
+#endif
+        }
+
+        /// <summary>
+        /// Calls TriggerChangeHandlers() and catches and prints any exception thrown.
+        /// </summary>
+        internal void TryTriggerChangeHandlers()
+        {
+#if !DISABLE_INIT_TRYCATCH
+            try
+            {
+                TriggerChangeHandlers();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(String.Format("[NUXML] {0}: TriggerChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+            }
+#else
+            TriggerChangeHandlers();
+#endif
+        }
+
+        /// <summary>
+        /// Returns string based on format string and parameters.
+        /// </summary>
+        public static string Format(string format, params object[] args)
+        {
+            return String.Format(format, args);
+        }
+
+        /// <summary>
+        /// Returns string based on format string and parameters.
+        /// </summary>
+        public static string Format2(string format, object arg1, object arg2)
+        {
+            return String.Format(format, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Returns string based on format string and parameters.
+        /// </summary>
+        public static string Format3(string format, object arg1, object arg2, object arg3)
+        {
+            return String.Format(format, arg1, arg2, arg3);
+        }
+
         #endregion
 
         #region Properties
 
         /// <summary>
-        /// Gets actual width of view in pixels. Useful when Width may be specified as percentage and you want actual pixel width.
+        /// Gets boolean indicating if this view is live (enabled and not destroyed).
         /// </summary>
-        public float ActualWidth
+        public bool IsLive
         {
             get
             {
-                var rectTransform = GetComponent<RectTransform>();
-                return Mathf.Abs(rectTransform.rect.width);
+                return IsActive && !IsDestroyed;
             }
         }
 
         /// <summary>
-        /// Gets actual height of view in pixels. Useful when Height may be specified as percentage and you want actual pixel height.
+        /// Gets boolean indicating if the view has any queued change handlers.
         /// </summary>
-        public float ActualHeight
+        public bool HasQueuedChangeHandlers
         {
             get
             {
-                var rectTransform = GetComponent<RectTransform>();
-                return Mathf.Abs(rectTransform.rect.height);
+                return _changeHandlers != null ? _changeHandlers.Count > 0 : false;
+            }
+        }
+
+        /// <summary>
+        /// Gets list of currently queued change handlers.
+        /// </summary>
+        public List<string> QueuedChangeHandlers
+        {
+            get
+            {
+                return _changeHandlers != null ? _changeHandlers.ToList() : new List<string>();
+            }
+        }
+
+        /// <summary>
+        /// Gets child count. 
+        /// </summary>
+        public int ChildCount
+        {
+            get
+            {
+                return transform.childCount;
+            }
+        }
+
+        /// <summary>
+        /// Gets GameObject name (usually view type + id). 
+        /// </summary>
+        public string GameObjectName
+        {
+            get
+            {
+                var viewName = ViewTypeName == "View" ? ViewXumlName : ViewTypeName;                
+                return !String.IsNullOrEmpty(Id) ? String.Format("{0} ({1})", viewName, Id) : viewName;
+            }
+        }
+
+        /// <summary>
+        /// Gets view field data of the view.
+        /// </summary>
+        public Dictionary<string, ViewFieldData> ViewFieldDataDictionary
+        {
+            get
+            {
+                return _viewFieldData;
             }
         }
 

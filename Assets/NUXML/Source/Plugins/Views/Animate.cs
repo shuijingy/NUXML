@@ -17,44 +17,81 @@ namespace NUXML.Views
     /// <summary>
     /// Animates views.
     /// </summary>
-    [InternalView]
+    /// <d>Animates view fields.</d>
+    [HideInPresenter]
     public class Animate : ViewAnimation
     {
         #region Fields
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Animation easing function
+        /// </summary>
+        /// <d>Easing function to be used when interpolating between From and To animation values.</d>
+        [ChangeHandler("BehaviorChanged")]
         public EasingFunctionType EasingFunction;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Auto reset animation.
+        /// </summary>
+        /// <d>Boolean indicating if the animation automatically should be reset when completed.</d>
+        [ChangeHandler("BehaviorChanged")]
         public bool AutoReset;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Auto reverse animation.
+        /// </summary>
+        /// <d>Boolean indicating if animation automatically should be reversed when completed.</d>
+        [ChangeHandler("BehaviorChanged")]
         public bool AutoReverse;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Animation view field.
+        /// </summary>
+        /// <d>Path to the view field that should be animated.</d>
+        [ChangeHandler("BehaviorChanged")]
         public string Field;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// From animation value.
+        /// </summary>
+        /// <d>The starting value to be set when the animation starts.</d>
+        [ChangeHandler("BehaviorChanged")]
         public object From;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// To animation value.
+        /// </summary>
+        /// <d>The end value to be interpolated to during animation.</d>
+        [ChangeHandler("BehaviorChanged")]
         public object To;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Animation reverse speed.
+        /// </summary>
+        /// <d>The speed the animation should have when run in reverse (percentage of original speed).</d>
+        [ChangeHandler("BehaviorChanged")]
         public float ReverseSpeed;
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Duration of animation.
+        /// </summary>
+        /// <d>The duration of the animation.</d>
+        [ChangeHandler("BehaviorChanged")]
         [DurationValueConverter]
         public float Duration; // duration in seconds
 
-        [ChangeHandler("UpdateBehavior")]
+        /// <summary>
+        /// Animation start offset.
+        /// </summary>
+        /// <d>Indicates a delay in starting the animation after it is triggered.</d>
+        [ChangeHandler("BehaviorChanged")]
         [DurationValueConverter]
         public float StartOffset;
 
-        [NotSetFromXml]
+        [NotSetFromXuml]
         public string FromStringValue;
 
-        [NotSetFromXml]
+        [NotSetFromXuml]
         public string ToStringValue;
 
         private ViewFieldAnimator _viewFieldAnimator;
@@ -64,13 +101,13 @@ namespace NUXML.Views
         #region Properties
 
         /// <summary>
-        /// Gets a boolean indicating whether this animation is active.
+        /// Gets a boolean indicating whether this animation is running.
         /// </summary>
-        public override bool IsAnimationActive
+        public override bool IsAnimationRunning
         {
             get
             {
-                return _viewFieldAnimator.Active;
+                return _viewFieldAnimator.IsRunning;
             }
         }
 
@@ -81,7 +118,7 @@ namespace NUXML.Views
         {
             get
             {
-                return _viewFieldAnimator.Reversing;
+                return _viewFieldAnimator.IsReversing;
             }
         }
 
@@ -92,7 +129,7 @@ namespace NUXML.Views
         {
             get
             {
-                return _viewFieldAnimator.Completed;
+                return _viewFieldAnimator.IsCompleted;
             }
         }
 
@@ -103,31 +140,28 @@ namespace NUXML.Views
         {
             get
             {
-                return _viewFieldAnimator.Paused;
+                return _viewFieldAnimator.IsPaused;
             }
         }
 
         #endregion
 
-        #region Constructor
+        #region Methods
 
         /// <summary>
-        /// Initializes a new instance of the class.
+        /// Sets default values of the view.
         /// </summary>
-        public Animate()
+        public override void SetDefaultValues()
         {
-            Enabled = false;
-            HideFlags = HideFlags.HideInHierarchy;
+            base.SetDefaultValues();
+
+            GameObject.hideFlags = UnityEngine.HideFlags.HideInHierarchy;
             EasingFunction = EasingFunctionType.Linear;
             AutoReset = false;
             AutoReverse = false;
             Duration = 0f;
             ReverseSpeed = 1.0f;
         }
-
-        #endregion
-
-        #region Methods
 
         /// <summary>
         /// Updates the animation each frame.
@@ -145,7 +179,7 @@ namespace NUXML.Views
         /// </summary>
         public override void StartAnimation()
         {
-            _viewFieldAnimator.StartAnimation();
+            _viewFieldAnimator.StartAnimation();            
         }
 
         /// <summary>
@@ -199,9 +233,9 @@ namespace NUXML.Views
         /// <summary>
         /// Called once by view before animations are used.
         /// </summary>
-        public override void UpdateBehavior()
-        {             
-            base.UpdateBehavior();
+        public override void BehaviorChanged()
+        {
+            base.BehaviorChanged();
 
             UpdateViewFieldAnimator();
         }
@@ -209,10 +243,9 @@ namespace NUXML.Views
         /// <summary>
         /// Sets animation target.
         /// </summary>
-        /// <param name="x"></param>
-        public override void SetAnimationTarget(GameObject go)
+        public override void SetAnimationTarget(View view)
         {
-            Target = go;
+            Target = view;
             UpdateViewFieldAnimator();
         }
 
@@ -224,12 +257,73 @@ namespace NUXML.Views
             base.Initialize();
             _viewFieldAnimator = new ViewFieldAnimator();
             UpdateViewFieldAnimator();
+
+            _viewFieldAnimator.Started += _viewFieldAnimator_Started;
+            _viewFieldAnimator.Completed += _viewFieldAnimator_Completed;
+            _viewFieldAnimator.Paused += _viewFieldAnimator_Paused;
+            _viewFieldAnimator.Resumed += _viewFieldAnimator_Resumed;
+            _viewFieldAnimator.Stopped += _viewFieldAnimator_Stopped;
+            _viewFieldAnimator.Reversed += _viewFieldAnimator_Reversed;
+        }
+
+        /// <summary>
+        /// Called when animation started.
+        /// </summary>
+        void _viewFieldAnimator_Started(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationStarted.Trigger();
+        }
+
+        /// <summary>
+        /// Called when animation completed.
+        /// </summary>
+        void _viewFieldAnimator_Completed(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationCompleted.Trigger();
+
+            // notify parent
+            if (LayoutParent is ViewAnimation)
+            {
+                (LayoutParent as ViewAnimation).ChildAnimationCompleted();
+            }
+        }
+
+        /// <summary>
+        /// Called when animation paused.
+        /// </summary>
+        void _viewFieldAnimator_Paused(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationPaused.Trigger();
+        }
+
+        /// <summary>
+        /// Called when animation reversed.
+        /// </summary>
+        void _viewFieldAnimator_Reversed(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationReversed.Trigger();
+        }
+
+        /// <summary>
+        /// Called when animation stopped.
+        /// </summary>
+        void _viewFieldAnimator_Stopped(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationStopped.Trigger();
+        }
+
+        /// <summary>
+        /// Called when animation resumed.
+        /// </summary>
+        void _viewFieldAnimator_Resumed(ViewFieldAnimator viewFieldAnimator)
+        {
+            AnimationResumed.Trigger();
         }
 
         /// <summary>
         /// Updates view field animator.
         /// </summary>
-        private void UpdateViewFieldAnimator()
+        public void UpdateViewFieldAnimator()
         {
             //Debug.Log(String.Format("Updating View Field Animator: {0}: {1}, {2}", Field, From, To));
             if (From != null && From is String)
@@ -259,17 +353,9 @@ namespace NUXML.Views
             _viewFieldAnimator.Duration = Duration;
             _viewFieldAnimator.StartOffset = StartOffset;
 
-            var view = Target != null ? Target.GetComponent<View>() :
-                (Parent != null ? Parent.GetComponent<View>() : null);
-            _viewFieldAnimator.SetAnimationTarget(view);
-        }
-
-        /// <summary>
-        /// Returns embedded XML for view.
-        /// </summary>
-        public override string GetEmbeddedXml()
-        {
-            return @"<Animate AutoReset=""False"" AutoReverse=""False"" Duration=""0s"" ReverseSpeed=""1"" />";
+            var view = Target != null ? Target :
+                (Parent != null ? Parent : null);
+            _viewFieldAnimator.TargetView = view;
         }
 
         #endregion

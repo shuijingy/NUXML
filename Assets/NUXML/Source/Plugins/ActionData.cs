@@ -8,7 +8,7 @@ namespace NUXML
     /// <summary>
     /// Base class for action data.
     /// </summary>
-	public class ActionData
+    public class ActionData
     {
     }
 }

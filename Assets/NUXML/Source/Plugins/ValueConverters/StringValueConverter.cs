@@ -39,7 +39,7 @@ namespace NUXML.ValueConverters
                 return base.Convert(value, context);
             }
 
-            if (value.GetType() == typeof(string))
+            if (value.GetType() == _stringType)
             {
                 var stringValue = (string)value;
                 return new ConversionResult(stringValue);
@@ -57,6 +57,14 @@ namespace NUXML.ValueConverters
                     return ConversionFailed(value, e);
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts value to string.
+        /// </summary>
+        public override string ConvertToString(object value)
+        {
+            return (string)value;
         }
 
         #endregion

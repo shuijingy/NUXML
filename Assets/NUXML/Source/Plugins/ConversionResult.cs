@@ -11,8 +11,8 @@ namespace NUXML
     {
         #region Fields
                 
-        private object _convertedObject;
-        private bool   _success;
+        private object _convertedValue;
+        private bool _success;
         private string _errorMessage;
 
         #endregion
@@ -30,10 +30,10 @@ namespace NUXML
         /// <summary>
         /// Initializes a new instance of the class.
         /// </summary>
-        public ConversionResult(object convertedObject)
+        public ConversionResult(object convertedValue)
         {
-            _convertedObject = convertedObject;
-            _success         = true;
+            _convertedValue = convertedValue;
+            _success = true;
         }
 
         #endregion
@@ -41,17 +41,17 @@ namespace NUXML
         #region Properties
 
         /// <summary>
-        /// Gets or sets converted object.
+        /// Gets or sets converted value.
         /// </summary>
-        public object ConvertedObject
+        public object ConvertedValue
         {
             get 
             {
-                return _convertedObject;
+                return _convertedValue;
             }
             set 
             {
-                _convertedObject = value;
+                _convertedValue = value;
             }
         }
 

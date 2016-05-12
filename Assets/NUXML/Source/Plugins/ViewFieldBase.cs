@@ -14,9 +14,9 @@ namespace NUXML
     {
         #region Fields
 
-        public View ParentView;
+        public View   ParentView;
         public string ViewFieldPath;
-        public bool _isSet;
+        public bool   _isSet;
 
         #endregion
     }

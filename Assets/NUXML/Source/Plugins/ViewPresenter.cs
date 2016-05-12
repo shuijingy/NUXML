@@ -63,10 +63,10 @@ namespace NUXML
         public ViewPresenter()
         {
             ViewTypeData = new List<ViewTypeData>();
-            ThemeData = new List<ThemeData>();
+            ThemeData    = new List<ThemeData>();
             ResourceDictionaries = new List<ResourceDictionary>();
-            Views = new List<string>();
-            Themes = new List<string>();
+            Views   = new List<string>();
+            Themes  = new List<string>();
             Sprites = new List<Sprite>();
             SpritePaths = new List<string>();
             Fonts = new List<Font>();

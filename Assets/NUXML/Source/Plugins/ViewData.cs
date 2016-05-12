@@ -162,15 +162,17 @@ namespace NUXML
         /// </summary>
         private static void LoadViewXuml(XElement xumlElement, string xuml)
         {
+			Debug.Log("--> LoadViewXuml:" + xumlElement.Name);
+
             var viewPresenter = ViewPresenter.Instance;
             viewPresenter.ViewTypeData.RemoveAll(x => String.Equals(x.ViewName, xumlElement.Name.LocalName, StringComparison.OrdinalIgnoreCase));
 
             var viewTypeData = new ViewTypeData();
             viewPresenter.ViewTypeData.Add(viewTypeData);
 
-            viewTypeData.Xuml = xuml;
+            viewTypeData.Xuml        = xuml;
             viewTypeData.XumlElement = xumlElement;
-            viewTypeData.ViewName = xumlElement.Name.LocalName;
+            viewTypeData.ViewName    = xumlElement.Name.LocalName;
 
             // set dependency names
             foreach (var descendant in xumlElement.Descendants())
@@ -193,17 +195,17 @@ namespace NUXML
 
             // set view action fields
             var viewActionType = typeof(ViewAction);
-            var actionFields = type.GetFields().Where(x => x.FieldType == viewActionType).Select(y => y.Name);
+            var actionFields   = type.GetFields().Where(x => x.FieldType == viewActionType).Select(y => y.Name);
             viewTypeData.ViewActionFields.AddRange(actionFields);
 
             // set dependency fields
             var viewFieldBaseType = typeof(ViewFieldBase);
-            var dependencyFields = type.GetFields().Where(x => viewFieldBaseType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
+            var dependencyFields  = type.GetFields().Where(x => viewFieldBaseType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
             viewTypeData.DependencyFields.AddRange(dependencyFields);
 
             // set component fields
             var componentType = typeof(Component);
-            var baseViewType = typeof(View);
+            var baseViewType  = typeof(View);
             var componentFields = type.GetFields().Where(x => componentType.IsAssignableFrom(x.FieldType) &&
                 !baseViewType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
             viewTypeData.ComponentFields.AddRange(componentFields);

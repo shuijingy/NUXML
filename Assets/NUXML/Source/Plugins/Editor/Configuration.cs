@@ -32,6 +32,8 @@ namespace NUXML.Editor
             ViewPaths = new List<string>();
             ViewPaths.Add("Assets/Views/");
             ViewPaths.Add("Assets/NUXML/Views/");
+			ViewPaths.Add("Assets/NUXML/Examples/Views/");
+
             SchemaFile = "Assets/NUXML/Views/Schemas/NUXML.xsd";
         }
 

@@ -14,8 +14,8 @@ namespace NUXML
     public class ListChangedEventArgs : EventArgs
     {
         public ListChangeAction ListChangeAction;
-        public int StartIndex;
-        public int EndIndex;
+        public int    StartIndex;
+        public int    EndIndex;
         public string FieldPath;
     }
 

@@ -205,18 +205,18 @@ namespace NUXML
         public List<string> SetViewFieldNames;
 
         public static string DefaultStateName = "Default";
-        public static string AnyStateName = "Any";
+        public static string AnyStateName     = "Any";
 
         private Dictionary<string, ViewFieldData> _viewFieldData;
         private Dictionary<string, Dictionary<string, ViewFieldStateValue>> _stateValues;
         private Dictionary<string, Dictionary<string, StateAnimation>> _stateAnimations;
-        private HashSet<string> _setViewFields;
-        private List<ValueObserver> _valueObservers;
-        private HashSet<string> _changeHandlers;
+        private HashSet<string>                _setViewFields;
+        private List<ValueObserver>            _valueObservers;
+        private HashSet<string>                _changeHandlers;
         private Dictionary<string, MethodInfo> _changeHandlerMethods;
-        private Dictionary<string, string> _expressionViewField;
-        private List<ViewAction> _eventSystemViewActions;
-        private bool _isDefaultState;
+        private Dictionary<string, string>     _expressionViewField;
+        private List<ViewAction>               _eventSystemViewActions;
+        private bool   _isDefaultState;
         private string _previousState;
         private StateAnimation _stateAnimation;
 
@@ -234,20 +234,20 @@ namespace NUXML
         public View()
         {
             ViewTypeName = GetType().Name;
-            ViewFieldBindings = new List<ViewFieldBinding>();
-            ViewActionEntries = new List<ViewActionEntry>();
+            ViewFieldBindings    = new List<ViewFieldBinding>();
+            ViewActionEntries    = new List<ViewActionEntry>();
             ViewFieldStateValues = new List<ViewFieldStateValue>();
-            SetViewFieldNames = new List<string>();
+            SetViewFieldNames    = new List<string>();
 
             // initalize private data (also done in InitializeInternalDefaultValues because of being set to null during deserialization)
-            _viewFieldData = new Dictionary<string, ViewFieldData>();
-            _stateValues = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
+            _viewFieldData   = new Dictionary<string, ViewFieldData>();
+            _stateValues     = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
             _stateAnimations = new Dictionary<string, Dictionary<string, StateAnimation>>();
-            _setViewFields = new HashSet<string>();
-            _valueObservers = new List<ValueObserver>();
-            _changeHandlers = new HashSet<string>();
-            _changeHandlerMethods = new Dictionary<string, MethodInfo>();
-            _expressionViewField = new Dictionary<string, string>();
+            _setViewFields   = new HashSet<string>();
+            _valueObservers  = new List<ValueObserver>();
+            _changeHandlers  = new HashSet<string>();
+            _changeHandlerMethods   = new Dictionary<string, MethodInfo>();
+            _expressionViewField    = new Dictionary<string, string>();
             _eventSystemViewActions = new List<ViewAction>();
         }
 
@@ -553,10 +553,10 @@ namespace NUXML
         /// </summary>
         private string ParseBindingString(string binding, out bool isLocalField, out bool isNegatedField, out bool isOneWay, out bool isResource)
         {
-            isLocalField = false;
+            isLocalField   = false;
             isNegatedField = false;
-            isOneWay = false;
-            isResource = false;
+            isOneWay       = false;
+            isResource     = false;
 
             var viewField = binding;
             while (viewField.Length > 0)
@@ -767,7 +767,7 @@ namespace NUXML
             _changeHandlerMethods = new Dictionary<string, MethodInfo>();
             _expressionViewField = new Dictionary<string, string>();
             _eventSystemViewActions = new List<ViewAction>();
-            _previousState = State;
+            _previousState  = State;
             _isDefaultState = State == DefaultStateName;
         }
 

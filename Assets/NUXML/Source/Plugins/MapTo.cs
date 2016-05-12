@@ -32,13 +32,13 @@ namespace NUXML
             MapFieldData.TriggerChangeHandlerImmediately = triggerChangeHandlerImmediately;
             if (valueConverterType != null)
             {
-                MapFieldData.ValueConverterType = valueConverterType.Name;
+                MapFieldData.ValueConverterType    = valueConverterType.Name;
                 MapFieldData.ValueConverterTypeSet = true;
             }
 
             if (changeHandlerName != null)
             {
-                MapFieldData.ChangeHandlerName = changeHandlerName;
+                MapFieldData.ChangeHandlerName    = changeHandlerName;
                 MapFieldData.ChangeHandlerNameSet = true;
             }
         }

@@ -194,10 +194,10 @@ namespace NUXML
         public string From;
         public string To;
         public string ValueConverterType;
-        public bool ValueConverterTypeSet;
+        public bool   ValueConverterTypeSet;
         public string ChangeHandlerName;
-        public bool ChangeHandlerNameSet;
-        public bool TriggerChangeHandlerImmediately;
+        public bool   ChangeHandlerNameSet;
+        public bool   TriggerChangeHandlerImmediately;
     }
 
     /// <summary>

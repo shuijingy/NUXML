@@ -21,7 +21,7 @@ namespace NUXML.Views.UI
     [MapViewField("Drag", "ScrollRect.Drag")]
     [MapViewField("InitializePotentialDrag", "ScrollRect.InitializePotentialDrag")]
     [MapViewField("BeginDrag", "ScrollRect.BeginDrag")]
-    [MapViewField("EndDrag", "ScrollRect.EndDrag")]
+    [MapViewField("EndDrag",   "ScrollRect.EndDrag")]
     [HideInPresenter]
     public class Panel : UIView
     {

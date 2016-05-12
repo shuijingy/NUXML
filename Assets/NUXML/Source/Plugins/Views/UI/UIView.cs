@@ -17,7 +17,8 @@ namespace NUXML.Views.UI
     /// <summary>
     /// Base class for UI views.
     /// </summary>    
-    /// <d>Base class for UI views. Has fields for doing layout such as Width, Height, Margin, Alignment, Offset, etc. and fields for rendering a background image.</d>
+    /// <d>Base class for UI views. 
+	/// Has fields for doing layout such as Width, Height, Margin, Alignment, Offset, etc. and fields for rendering a background image.</d>
     [HideInPresenter]
     public class UIView : View
     {

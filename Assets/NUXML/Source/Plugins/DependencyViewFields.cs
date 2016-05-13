@@ -263,6 +263,16 @@ namespace NUXML
 		public static implicit operator UIPanel(_UIPanel value) { return value.Value;}
 	}
 
+	public class _UIRoot : ViewField<UIRoot>
+	{
+		public static implicit operator UIRoot(_UIRoot value) { return value.Value;}
+	}
+
+	public class _Scaling : ViewField<UIRoot.Scaling>
+	{
+		public static implicit operator UIRoot.Scaling(_Scaling value) { return value.Value;}
+	}
+		
 	public class _UISprite : ViewField<UISprite>
 	{
 		public static implicit operator UISprite(_UISprite value) { return value.Value;}

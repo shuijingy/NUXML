@@ -28,12 +28,12 @@ namespace NUXML
         private MethodInfo _viewActionMethod;
 
         private object[] _parameters;
-        private bool _hasActionDataParameter;
-        private int _actionDataParameterIndex;
-        private bool _hasEventDataParemeter;
-        private int _eventDataParameterIndex;
-        private bool _hasCustomDataParameter;
-        private int _customDataParameterIndex;
+        private bool     _hasActionDataParameter;
+        private int      _actionDataParameterIndex;
+        private bool     _hasEventDataParemeter;
+        private int      _eventDataParameterIndex;
+        private bool     _hasCustomDataParameter;
+        private int      _customDataParameterIndex;
 
         #endregion
 

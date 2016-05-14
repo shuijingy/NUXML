@@ -44,7 +44,8 @@ namespace NUXML.Editor
                 // .. trigger reload on view presenter
                 if (!viewPresenter.DisableAutomaticReload)
                 {
-                    ViewData.GenerateViews();
+                    //ViewData.GenerateViews();
+					ViewData.GenerateNGUIViews();
                 }
             }
 
@@ -63,7 +64,8 @@ namespace NUXML.Editor
                 // .. trigger reload on view presenter
                 if (!viewPresenter.DisableAutomaticReload)
                 {
-                    ViewData.GenerateViews();
+                    //ViewData.GenerateViews();
+					ViewData.GenerateNGUIViews();
                 }
             }
 

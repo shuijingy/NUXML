@@ -19,12 +19,11 @@ namespace NUXML.Views.NGUI
 	/// <d>The canvas view is used to render UI components and controls things like draw sort order, scaling and render mode. 
 	/// In order for UIViews to be rendered and positioned correctly they must be put under a parent NGUIRoot or a subclass of (like UIRoot).</d>
 	[HideInPresenter]
-	public class NGUIRoot : UIView
+	public class NGUIScrollView : View
 	{
 		#region Fields
 
-		[MapTo("UIRoot.Scaling")]
-		public _Scaling ScalingStyle;
+
 
 		#endregion
 
@@ -37,7 +36,7 @@ namespace NUXML.Views.NGUI
 		public override void SetDefaultValues()
 		{
 			base.SetDefaultValues();
-	
+
 			//Dummy
 
 		}
@@ -45,3 +44,4 @@ namespace NUXML.Views.NGUI
 		#endregion
 	}
 }
+

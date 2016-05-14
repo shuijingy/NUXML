@@ -50,20 +50,6 @@ namespace NUXML.Views.NGUI
 		[MapTo("TextComponent.fontSize", "TextStyleChanged")]
 		public _int FontSize;
 
-//		/// <summary>
-//		/// Label text line spacing.
-//		/// </summary>
-//		/// <d>The line spacing of the label text.</d>
-//		[MapTo("TextComponent.lineSpacing", "TextStyleChanged")]
-//		public _int LineSpacing;
-
-//		/// <summary>
-//		/// Support rich text.
-//		/// </summary>
-//		/// <d>Boolean indicating if the label supports rich text.</d>
-//		[MapTo("TextComponent.supportRichText")]
-//		public _bool SupportRichText;
-
 		/// <summary>
 		/// Label text font color.
 		/// </summary>
@@ -78,51 +64,6 @@ namespace NUXML.Views.NGUI
 		[MapTo("TextComponent.fontStyle", "TextStyleChanged")]
 		public _FontStyle FontStyle;
 
-//		/// <summary>
-//		/// Align by glyph geometry.
-//		/// </summary>
-//		/// <d>Boolean indicating if the extents of glyph geometry should be used to perform horizontal alignment rather than glyph metrics.</d>
-//		[MapTo("TextComponent.alignByGeometry")]
-//		public _bool AlignByGeometry;
-
-//		/// <summary>
-//		/// Resize text for best fit.
-//		/// </summary>
-//		/// <d>Boolean indicating if the text is to be automatically resized to fill the size of the label.</d>
-//		[MapTo("TextComponent.resizeTextForBestFit")]
-//		public _bool ResizeTextForBestFit;
-//
-//		/// <summary>
-//		/// Resize text max size.
-//		/// </summary>
-//		/// <d>If ResizeTextForBestFit is true this indicates the maximum size the text can be, 1 = infinity.</d>
-//		[MapTo("TextComponent.resizeTextMaxSize")]
-//		public _int ResizeTextMaxSize;
-//
-//		/// <summary>
-//		/// Resize text min size.
-//		/// </summary>
-//		/// <d>If ResizeTextForBestFit is true this indicates the minimum size the text can be.<d>
-//		[MapTo("TextComponent.resizeTextMinSize")]
-//		public _int ResizeTextMinSize;
-
-//		#if !UNITY_4_6
-//		/// <summary>
-//		/// Horizontal overflow mode.
-//		/// </summary>
-//		/// <d>Indicates what will happen if the text overflows the horizontal bounds of the label.<d>
-//		[MapTo("TextComponent.horizontalOverflow")]
-//		public _HorizontalWrapMode HorizontalOverflow;
-
-//		/// <summary>
-//		/// Vertical overflow mode.
-//		/// </summary>
-//		/// <d>Indicates what will happen if the text overflows the vertical bounds of the label.<d>
-//		[MapTo("TextComponent.verticalOverflow")]
-//		public _VerticalWrapMode VerticalOverflow;
-//
-//		#endif
-
 		#endregion
 
 		/// <summary>
@@ -131,34 +72,6 @@ namespace NUXML.Views.NGUI
 		/// <d>The alignment of the text inside the label. Can be used with TextMargin and TextOffset to get desired positioning of the text.</d>
 		[ChangeHandler("BehaviorChanged")]
 		public _ElementAlignment TextAlignment;
-
-		/// <summary>
-		/// Label text shadow color.
-		/// </summary>
-		/// <d>The shadow color of the label text.</d>
-		[ChangeHandler("BehaviorChanged")]
-		public _Color ShadowColor;
-
-		/// <summary>
-		/// Label text shadow distance.
-		/// </summary>
-		/// <d>The distance of the label text shadow.</d>
-		[ChangeHandler("BehaviorChanged")]
-		public _Vector2 ShadowDistance;
-
-		/// <summary>
-		/// Label text outline color.
-		/// </summary>
-		/// <d>The outline color of the label text.</d>
-		[ChangeHandler("BehaviorChanged")]
-		public _Color OutlineColor;
-
-		/// <summary>
-		/// Label text outline distance.
-		/// </summary>
-		/// <d>The distance of the label text outline.</d>
-		[ChangeHandler("BehaviorChanged")]
-		public _Vector2 OutlineDistance;
 
 		/// <summary>
 		/// Adjust label to text.
@@ -186,14 +99,8 @@ namespace NUXML.Views.NGUI
 			TextAlignment.DirectValue = ElementAlignment.Left;
 			if (TextComponent != null)
 			{
-				TextComponent.fontSize    = 18;
-//				TextComponent.lineSpacing = 1;
-				TextComponent.color = Color.black;
-
-//				#if !UNITY_4_6_0 && !UNITY_4_6_1 && !UNITY_4_6_2
-//				TextComponent.horizontalOverflow = HorizontalWrapMode.Overflow;
-//				TextComponent.verticalOverflow = VerticalWrapMode.Overflow;                
-//				#endif
+				TextComponent.fontSize  = 18;
+				TextComponent.color     = Color.black;
 			}
 		}
 
@@ -253,29 +160,6 @@ namespace NUXML.Views.NGUI
 
 //			TextComponent.alignment = TextAnchor;
 
-			if (ShadowColor.IsSet || ShadowDistance.IsSet)
-			{
-				var shadowComponent = GetComponent<Shadow>();
-				if (shadowComponent == null)
-				{
-					shadowComponent = gameObject.AddComponent<Shadow>();
-				}
-
-				shadowComponent.effectColor = ShadowColor.Value;
-				shadowComponent.effectDistance = ShadowDistance.Value;
-			}
-
-			if (OutlineColor.IsSet || OutlineDistance.IsSet)
-			{
-				var outlineComponent = GetComponent<Outline>();
-				if (outlineComponent == null)
-				{
-					outlineComponent = gameObject.AddComponent<Outline>();
-				}
-
-				outlineComponent.effectColor = OutlineColor.Value;
-				outlineComponent.effectDistance = OutlineDistance.Value;
-			}
 		}
 
 //		/// <summary>
@@ -304,7 +188,9 @@ namespace NUXML.Views.NGUI
 		public string ParseText(string text)
 		{
 			if (text == null)
+			{
 				return String.Empty;
+			}
 
 //			if (!TextComponent.supportRichText)
 //				return text;
@@ -466,6 +352,7 @@ namespace NUXML.Views.NGUI
 				result.Append(str);
 			}
 
+			Debug.Log("--> ParseText:" + result.ToString());
 			return result.ToString();
 		}
 

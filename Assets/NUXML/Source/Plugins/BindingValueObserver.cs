@@ -19,10 +19,13 @@ namespace NUXML
 
         public List<BindingSource> Sources;
         public ViewFieldData Target;
-        public BindingType BindingType;
-        public string FormatString;
-        public MethodInfo TransformMethod;
-        public View ParentView;        
+        public BindingType   BindingType;
+        public string        FormatString;
+        public MethodInfo    TransformMethod;
+        public View          ParentView;       
+
+		public NGUIViewFieldData TargetNGUI;
+		public NGUIView          ParentNGUIView;
 
         #endregion
 
@@ -81,7 +84,7 @@ namespace NUXML
                         }
                         else
                         {
-                            Target.SetValue(TransformMethod.Invoke(ParentView, pars), callstack);                            
+							Target.SetValue(TransformMethod.Invoke(ParentView, pars), callstack);                           
                         }
                         break;
 
@@ -103,6 +106,67 @@ namespace NUXML
                 PrintBindingError(e);
             }
         }
+
+		public override void Notify(HashSet<NGUIViewFieldData> callstack)
+		{
+			try
+			{
+				base.Notify(callstack);
+				bool hasValue;
+
+				//Debug.Log(String.Format("Source(s) updated. Updating target field: {0}", Target.ViewFieldPath));
+				switch (BindingType)
+				{
+				default:
+				case BindingType.SingleBinding:
+					var value = Sources[0].GetValue(out hasValue);
+					if (hasValue)
+					{
+						// use to debug
+						//Debug.Log(String.Format("Propagating Value \"{4}\": {0}.{1} -> {2}.{3}", Sources[0].ViewFieldData.TargetView.ViewTypeName, Sources[0].ViewFieldData.TargetViewFieldPath,
+						//    Target.TargetView.ViewTypeName, Target.TargetViewFieldPath, value.ToString()));
+
+						// set value
+						TargetNGUI.SetValue(value, callstack);
+					}
+					break;
+
+				case BindingType.MultiBindingTransform:
+					object[] pars = Sources.Count > 0 ? new object[Sources.Count] : null;
+					for (int i = 0; i < pars.Length; ++i)
+					{
+						pars[i] = Sources[i].GetValue(out hasValue);
+					}
+
+					// set transformed value
+					if (TransformMethod.IsStatic)
+					{
+						TargetNGUI.SetValue(TransformMethod.Invoke(null, pars), callstack);
+					}
+					else
+					{
+						TargetNGUI.SetValue(TransformMethod.Invoke(ParentNGUIView, pars), callstack);                            
+					}
+					break;
+
+				case BindingType.MultiBindingFormatString:
+					object[] formatPars = Sources.Count > 0 ? new object[Sources.Count] : null;
+					for (int i = 0; i < formatPars.Length; ++i)
+					{
+						formatPars[i] = Sources[i].GetValue(out hasValue);
+					}
+
+					// set format string value
+					TargetNGUI.SetValue(String.Format(FormatString, formatPars), callstack);
+					break;
+
+				}
+			}
+			catch (Exception e)
+			{
+				PrintBindingError(e);
+			}
+		}
 
         /// <summary>
         /// Prints a formatted error message.

@@ -17,10 +17,12 @@ namespace NUXML
     {
         #region Fields
 
-        public View ParentView;
-        public string ChangeHandlerName;
-        public bool TriggerImmediately;
-        public bool IsValid;
+        public View     ParentView;
+		public NGUIView ParentNGUIView;
+
+        public string   ChangeHandlerName;
+        public bool     TriggerImmediately;
+        public bool     IsValid;
 
         private MethodInfo _changeHandlerMethod;
 
@@ -40,6 +42,16 @@ namespace NUXML
             _changeHandlerMethod = ParentView.GetType().GetMethod(ChangeHandlerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             IsValid = _changeHandlerMethod != null;
         }
+
+		public ChangeHandlerValueObserver(NGUIView parentView, string changeHandlerName, bool triggerImmediately)
+		{
+			ParentNGUIView = parentView;
+			ChangeHandlerName  = changeHandlerName;
+			TriggerImmediately = triggerImmediately;
+
+			_changeHandlerMethod = ParentNGUIView.GetType().GetMethod(ChangeHandlerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			IsValid = _changeHandlerMethod != null;
+		}
 
         #endregion
 

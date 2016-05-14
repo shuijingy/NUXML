@@ -1299,9 +1299,9 @@
     <xs:attribute name="IsTemplate" type="xs:string" />
     <xs:attribute name="IsDestroyed" type="xs:string" />
     <xs:attribute name="IsDynamic" type="xs:string" />
-    <xs:attribute name="ItemSelected" type="xs:string" />
-    <xs:attribute name="ItemDeselected" type="xs:string" />
     <xs:attribute name="ListChanged" type="xs:string" />
+    <xs:attribute name="ItemDeselected" type="xs:string" />
+    <xs:attribute name="ItemSelected" type="xs:string" />
     <xs:attribute name="Activated" type="xs:string" />
     <xs:attribute name="Deactivated" type="xs:string" />
     <xs:anyAttribute processContents="skip" />
@@ -1726,6 +1726,363 @@
     <xs:anyAttribute processContents="skip" />
   </xs:complexType>
 
+  <xs:element name="NGUILabel" type="NGUILabel" />
+  <xs:complexType name="NGUILabel">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="Text" type="xs:string" />
+    <xs:attribute name="Font" type="xs:string" />
+    <xs:attribute name="FontSize" type="xs:string" />
+    <xs:attribute name="FontColor" type="xs:string" />
+    <xs:attribute name="FontStyle" type="EnumFontStyle" />
+    <xs:attribute name="TextAlignment" type="EnumElementAlignment" />
+    <xs:attribute name="ShadowColor" type="xs:string" />
+    <xs:attribute name="ShadowDistance" type="xs:string" />
+    <xs:attribute name="OutlineColor" type="xs:string" />
+    <xs:attribute name="OutlineDistance" type="xs:string" />
+    <xs:attribute name="AdjustToText" type="EnumAdjustToText" />
+    <xs:attribute name="Width" type="xs:string" />
+    <xs:attribute name="Height" type="xs:string" />
+    <xs:attribute name="OverrideWidth" type="xs:string" />
+    <xs:attribute name="OverrideHeight" type="xs:string" />
+    <xs:attribute name="Alignment" type="EnumElementAlignment" />
+    <xs:attribute name="Margin" type="xs:string" />
+    <xs:attribute name="Offset" type="xs:string" />
+    <xs:attribute name="OffsetFromParent" type="xs:string" />
+    <xs:attribute name="Pivot" type="xs:string" />
+    <xs:attribute name="RaycastBlockMode" type="EnumRaycastBlockMode" />
+    <xs:attribute name="Alpha" type="xs:string" />
+    <xs:attribute name="IsVisible" type="xs:string" />
+    <xs:attribute name="SortIndex" type="xs:string" />
+    <xs:attribute name="UpdateRectTransform" type="xs:string" />
+    <xs:attribute name="UpdateBackground" type="xs:string" />
+    <xs:attribute name="BackgroundImageEventAlphaThreshold" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillAmount" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillCenter" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillClockwise" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillMethod" type="EnumFillMethod" />
+    <xs:attribute name="BackgroundImageFillOrigin" type="xs:string" />
+    <xs:attribute name="BackgroundImageOverrideSprite" type="xs:string" />
+    <xs:attribute name="BackgroundImagePreserveAspect" type="xs:string" />
+    <xs:attribute name="BackgroundImage" type="xs:string" />
+    <xs:attribute name="BackgroundImageType" type="EnumType" />
+    <xs:attribute name="BackgroundMaterial" type="xs:string" />
+    <xs:attribute name="BackgroundImageMaskable" type="xs:string" />
+    <xs:attribute name="BackgroundColor" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUIButton" type="NGUIButton" />
+  <xs:complexType name="NGUIButton">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="Text" type="xs:string" />
+    <xs:attribute name="Font" type="xs:string" />
+    <xs:attribute name="FontSize" type="xs:string" />
+    <xs:attribute name="FontColor" type="xs:string" />
+    <xs:attribute name="FontStyle" type="EnumFontStyle" />
+    <xs:attribute name="TextMargin" type="xs:string" />
+    <xs:attribute name="TextAlignment" type="EnumElementAlignment" />
+    <xs:attribute name="TextOffset" type="xs:string" />
+    <xs:attribute name="ShadowColor" type="xs:string" />
+    <xs:attribute name="ShadowDistance" type="xs:string" />
+    <xs:attribute name="OutlineColor" type="xs:string" />
+    <xs:attribute name="OutlineDistance" type="xs:string" />
+    <xs:attribute name="AdjustToText" type="EnumAdjustToText" />
+    <xs:attribute name="IsToggleButton" type="xs:string" />
+    <xs:attribute name="IsDisabled" type="xs:string" />
+    <xs:attribute name="ToggleValue" type="xs:string" />
+    <xs:attribute name="TextPadding" type="xs:string" />
+    <xs:attribute name="CanToggleOn" type="xs:string" />
+    <xs:attribute name="CanToggleOff" type="xs:string" />
+    <xs:attribute name="Width" type="xs:string" />
+    <xs:attribute name="Height" type="xs:string" />
+    <xs:attribute name="OverrideWidth" type="xs:string" />
+    <xs:attribute name="OverrideHeight" type="xs:string" />
+    <xs:attribute name="Alignment" type="EnumElementAlignment" />
+    <xs:attribute name="Margin" type="xs:string" />
+    <xs:attribute name="Offset" type="xs:string" />
+    <xs:attribute name="OffsetFromParent" type="xs:string" />
+    <xs:attribute name="Pivot" type="xs:string" />
+    <xs:attribute name="RaycastBlockMode" type="EnumRaycastBlockMode" />
+    <xs:attribute name="Alpha" type="xs:string" />
+    <xs:attribute name="IsVisible" type="xs:string" />
+    <xs:attribute name="SortIndex" type="xs:string" />
+    <xs:attribute name="UpdateRectTransform" type="xs:string" />
+    <xs:attribute name="UpdateBackground" type="xs:string" />
+    <xs:attribute name="BackgroundImageEventAlphaThreshold" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillAmount" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillCenter" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillClockwise" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillMethod" type="EnumFillMethod" />
+    <xs:attribute name="BackgroundImageFillOrigin" type="xs:string" />
+    <xs:attribute name="BackgroundImageOverrideSprite" type="xs:string" />
+    <xs:attribute name="BackgroundImagePreserveAspect" type="xs:string" />
+    <xs:attribute name="BackgroundImage" type="xs:string" />
+    <xs:attribute name="BackgroundImageType" type="EnumType" />
+    <xs:attribute name="BackgroundMaterial" type="xs:string" />
+    <xs:attribute name="BackgroundImageMaskable" type="xs:string" />
+    <xs:attribute name="BackgroundColor" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Click" type="xs:string" />
+    <xs:attribute name="MouseEnter" type="xs:string" />
+    <xs:attribute name="MouseExit" type="xs:string" />
+    <xs:attribute name="MouseDown" type="xs:string" />
+    <xs:attribute name="MouseUp" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUIGrid" type="NGUIGrid" />
+  <xs:complexType name="NGUIGrid">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUIInput" type="NGUIInput" />
+  <xs:complexType name="NGUIInput">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUIPanel" type="NGUIPanel" />
+  <xs:complexType name="NGUIPanel">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="Width" type="xs:string" />
+    <xs:attribute name="Height" type="xs:string" />
+    <xs:attribute name="OverrideWidth" type="xs:string" />
+    <xs:attribute name="OverrideHeight" type="xs:string" />
+    <xs:attribute name="Alignment" type="EnumElementAlignment" />
+    <xs:attribute name="Margin" type="xs:string" />
+    <xs:attribute name="Offset" type="xs:string" />
+    <xs:attribute name="OffsetFromParent" type="xs:string" />
+    <xs:attribute name="Pivot" type="xs:string" />
+    <xs:attribute name="RaycastBlockMode" type="EnumRaycastBlockMode" />
+    <xs:attribute name="Alpha" type="xs:string" />
+    <xs:attribute name="IsVisible" type="xs:string" />
+    <xs:attribute name="SortIndex" type="xs:string" />
+    <xs:attribute name="UpdateRectTransform" type="xs:string" />
+    <xs:attribute name="UpdateBackground" type="xs:string" />
+    <xs:attribute name="BackgroundImageEventAlphaThreshold" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillAmount" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillCenter" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillClockwise" type="xs:string" />
+    <xs:attribute name="BackgroundImageFillMethod" type="EnumFillMethod" />
+    <xs:attribute name="BackgroundImageFillOrigin" type="xs:string" />
+    <xs:attribute name="BackgroundImageOverrideSprite" type="xs:string" />
+    <xs:attribute name="BackgroundImagePreserveAspect" type="xs:string" />
+    <xs:attribute name="BackgroundImage" type="xs:string" />
+    <xs:attribute name="BackgroundImageType" type="EnumType" />
+    <xs:attribute name="BackgroundMaterial" type="xs:string" />
+    <xs:attribute name="BackgroundImageMaskable" type="xs:string" />
+    <xs:attribute name="BackgroundColor" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="BeginDrag" type="xs:string" />
+    <xs:attribute name="InitializePotentialDrag" type="xs:string" />
+    <xs:attribute name="EndDrag" type="xs:string" />
+    <xs:attribute name="Drag" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUISlider" type="NGUISlider" />
+  <xs:complexType name="NGUISlider">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUISprite" type="NGUISprite" />
+  <xs:complexType name="NGUISprite">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUITexture" type="NGUITexture" />
+  <xs:complexType name="NGUITexture">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:element name="NGUIToggle" type="NGUIToggle" />
+  <xs:complexType name="NGUIToggle">
+    <xs:sequence>
+      <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Id" type="xs:string" />
+    <xs:attribute name="Style" type="xs:string" />
+    <xs:attribute name="BasedOn" type="xs:string" />
+    <xs:attribute name="Theme" type="xs:string" />
+    <xs:attribute name="BaseDirectory" type="xs:string" />
+    <xs:attribute name="UnitSize" type="xs:string" />
+    <xs:attribute name="State" type="xs:string" />
+    <xs:attribute name="IsActive" type="xs:string" />
+    <xs:attribute name="HideFlags" type="EnumHideFlags" />
+    <xs:attribute name="Position" type="xs:string" />
+    <xs:attribute name="Rotation" type="xs:string" />
+    <xs:attribute name="Scale" type="xs:string" />
+    <xs:attribute name="Item" type="xs:string" />
+    <xs:attribute name="IsTemplate" type="xs:string" />
+    <xs:attribute name="IsDestroyed" type="xs:string" />
+    <xs:attribute name="IsDynamic" type="xs:string" />
+    <xs:attribute name="Activated" type="xs:string" />
+    <xs:attribute name="Deactivated" type="xs:string" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
   <xs:element name="ScrollRect" type="ScrollRect" />
   <xs:complexType name="ScrollRect">
     <xs:sequence>
@@ -1966,10 +2323,10 @@
     <xs:attribute name="IsTemplate" type="xs:string" />
     <xs:attribute name="IsDestroyed" type="xs:string" />
     <xs:attribute name="IsDynamic" type="xs:string" />
-    <xs:attribute name="EndDrag" type="xs:string" />
-    <xs:attribute name="BeginDrag" type="xs:string" />
-    <xs:attribute name="InitializePotentialDrag" type="xs:string" />
     <xs:attribute name="Drag" type="xs:string" />
+    <xs:attribute name="EndDrag" type="xs:string" />
+    <xs:attribute name="InitializePotentialDrag" type="xs:string" />
+    <xs:attribute name="BeginDrag" type="xs:string" />
     <xs:attribute name="Activated" type="xs:string" />
     <xs:attribute name="Deactivated" type="xs:string" />
     <xs:anyAttribute processContents="skip" />

@@ -218,6 +218,6 @@ namespace NUXML
     {
         public string ViewField;
         public string ChangeHandlerName;
-        public bool TriggerImmediately;
+        public bool   TriggerImmediately;
     }
 }

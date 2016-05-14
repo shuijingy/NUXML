@@ -1,0 +1,5 @@
+<TestNGUIView xmlns="NUXML">
+  <NGUIPanel>
+    <NGUIButton Text="Play" Click="StartGame" />
+  </NGUIPanel>
+</TestNGUIView>

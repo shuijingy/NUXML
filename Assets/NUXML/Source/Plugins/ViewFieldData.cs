@@ -44,8 +44,11 @@ namespace NUXML
         /// <summary>
         /// Sets value of field.
         /// </summary>
-        public object SetValue(object inValue, HashSet<ViewFieldData> callstack, bool updateDefaultState = true,
-            ValueConverterContext context = null, bool notifyObservers = true)
+        public object SetValue(object inValue, 
+			                   HashSet<ViewFieldData> callstack, 
+			                   bool updateDefaultState = true,
+                               ValueConverterContext context = null, 
+			                   bool notifyObservers = true)
         {
             if (callstack.Contains(this))
                 return null;

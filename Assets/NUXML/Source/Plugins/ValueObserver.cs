@@ -35,6 +35,10 @@ namespace NUXML
         {
         }
 
+		public virtual void Notify(HashSet<NGUIViewFieldData> callstack)
+		{
+		}
+
         #endregion
     }
 }

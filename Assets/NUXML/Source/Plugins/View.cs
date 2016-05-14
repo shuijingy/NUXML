@@ -375,8 +375,8 @@ namespace NUXML
                     return;
                 }
 
-                bindingValueObserver.BindingType = BindingType.MultiBindingTransform;
-                bindingValueObserver.ParentView = Parent;
+                bindingValueObserver.BindingType    = BindingType.MultiBindingTransform;
+				bindingValueObserver.ParentNGUIView = Parent;
 
                 // get transformation method
                 string transformMethodName = bindings[0];

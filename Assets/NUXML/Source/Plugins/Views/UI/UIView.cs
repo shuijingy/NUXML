@@ -253,26 +253,26 @@ namespace NUXML.Views.UI
             base.SetDefaultValues();
 
             Alignment.DirectValue = NUXML.ElementAlignment.Center;
-            Width.DirectValue = new ElementSize(1.0f, ElementSizeUnit.Percents);
+            Width.DirectValue  = new ElementSize(1.0f, ElementSizeUnit.Percents);
             Height.DirectValue = new ElementSize(1.0f, ElementSizeUnit.Percents);
-            OverrideWidth.DirectValue = ElementSize.FromPixels(0);
+            OverrideWidth.DirectValue  = ElementSize.FromPixels(0);
             OverrideHeight.DirectValue = ElementSize.FromPixels(0);
             Margin.DirectValue = new ElementMargin();
             Offset.DirectValue = new ElementMargin();
-            Alpha.DirectValue = 1;
+            Alpha.DirectValue     = 1;
             IsVisible.DirectValue = true;
 
             if (ImageComponent != null)
             {
                 ImageComponent.color = Color.clear;
-                ImageComponent.type = UnityEngine.UI.Image.Type.Simple;
+                ImageComponent.type  = UnityEngine.UI.Image.Type.Simple;
             }
 
             IsActive.DirectValue = true;
             OffsetFromParent.DirectValue = new ElementMargin();
             SortIndex.DirectValue = 0;
             UpdateRectTransform.DirectValue = true;
-            UpdateBackground.DirectValue = true;
+            UpdateBackground.DirectValue    = true;
         }
 
         /// <summary>
@@ -284,11 +284,13 @@ namespace NUXML.Views.UI
             //Debug.Log(String.Format("{0}.LayoutChanged called", ViewTypeName));
 
             if (!UpdateRectTransform) 
+			{
                 return; // rect transform is updated elsewhere
+			}
 
             // update rectTransform
             // horizontal alignment and positioning
-            var width = OverrideWidth.IsSet ? OverrideWidth : Width;
+            var width  = OverrideWidth.IsSet  ? OverrideWidth : Width;
             var height = OverrideHeight.IsSet ? OverrideHeight : Height;
 
             float xMin = 0f;
@@ -368,7 +370,6 @@ namespace NUXML.Views.UI
         public override void BehaviorChanged()
         {
             base.BehaviorChanged();
-            //Debug.Log(String.Format("{0}.BehaviorChanged called", Name));
         }
 
         /// <summary>
@@ -377,7 +378,9 @@ namespace NUXML.Views.UI
         public virtual void BackgroundChanged()
         {
             if (!UpdateBackground)
+			{
                 return; // background image is updated elsewhere
+			}
 
             if (Alpha.IsSet || IsVisible.IsSet || RaycastBlockMode.IsSet)
             {

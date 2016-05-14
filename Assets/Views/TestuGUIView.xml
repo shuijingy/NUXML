@@ -1,6 +1,6 @@
-<TestView xmlns="NUXML">
+<TestuGUIView xmlns="NUXML">
   <UserInterface>
     <Button Text="Play" Click="StartGame" />
   </UserInterface>
   <EventSystem />
-</TestView>
+</TestuGUIView>

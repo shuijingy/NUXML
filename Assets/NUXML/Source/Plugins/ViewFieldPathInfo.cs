@@ -18,7 +18,7 @@ namespace NUXML
         #region Fields
 
         public List<MemberInfo> MemberInfo;
-        public HashSet<string> Dependencies;
+        public HashSet<string>  Dependencies;
 
         #endregion
 
@@ -29,7 +29,7 @@ namespace NUXML
         /// </summary>
         public ViewFieldPathInfo()
         {
-            MemberInfo = new List<MemberInfo>();
+            MemberInfo   = new List<MemberInfo>();
             Dependencies = new HashSet<string>();
         }
 

@@ -92,7 +92,7 @@ namespace NUXML
 			}
 
 			// initialize views
-			viewPresenter.Initialize();
+			viewPresenter.InitializeViews();
 		}
 			
 		/// <summary>
@@ -488,7 +488,13 @@ namespace NUXML
 		/// <summary>
 		/// Creates view of specified type.
 		/// </summary>
-		public static T CreateNGUIView<T>(View layoutParent, View parent, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
+		public static T CreateNGUIView<T>(NGUIView layoutParent, 
+										  NGUIView parent, 
+										  ValueConverterContext context = null, 
+										  string themeName = "", 
+										  string id    = "", 
+										  string style = "", 
+										  IEnumerable<XElement> contentXuml = null) where T : NGUIView
 		{
 			Type viewType = typeof(T);
 			return CreateNGUIView(viewType.Name, layoutParent, parent, context, themeName, id, style, contentXuml) as T;
@@ -507,8 +513,8 @@ namespace NUXML
 		/// <param name="style">Style.</param>
 		/// <param name="contentXuml">Content xuml.</param>
 		public static NGUIView CreateNGUIView(string viewName, 
-			View   layoutParent, 
-			View   parent, 
+			NGUIView   layoutParent, 
+			NGUIView   parent, 
 			ValueConverterContext context = null, 
 			string theme = "", 
 			string id    = "",  
@@ -556,14 +562,14 @@ namespace NUXML
 
 			// create view game object with required components
 			var go = new GameObject(viewTypeData.ViewName);
-			if (typeof(UIView).IsAssignableFrom(viewType))
+			if (typeof(NGUIView).IsAssignableFrom(viewType))
 			{
 				go.AddComponent<RectTransform>();
 			}
 			go.transform.SetParent(layoutParent.transform, false);
 
 			// create view behavior and initialize it
-			var view = go.AddComponent(viewType) as View;
+			var view = go.AddComponent(viewType) as NGUIView;
 			view.LayoutParent = layoutParent;
 			view.Parent       = parent;
 			view.Id           = id;
@@ -598,7 +604,7 @@ namespace NUXML
 			{
 				Debug.Log("->> componentField: " + viewActionField);	
 				var viewActionFieldInfo = viewType.GetField(viewActionField);
-				viewActionFieldInfo.SetValue(view, new ViewAction(viewActionField));
+				viewActionFieldInfo.SetValue(view, new NGUIViewAction(viewActionField));
 			}
 
 			// set dependency fields            
@@ -620,8 +626,8 @@ namespace NUXML
 				var childThemeAttr = childElement.Attribute("Theme");
 				var childContext = GetValueConverterContext(context, childElement, view.GameObjectName);
 
-				var childView = CreateView(childElement.Name.LocalName, view, view, childContext,
-					childThemeAttr != null ? childThemeAttr.Value : theme,
+				var childView = CreateNGUIView(childElement.Name.LocalName, view, view, childContext,
+					childThemeAttr  != null ? childThemeAttr.Value  : theme,
 					childViewIdAttr != null ? childViewIdAttr.Value : String.Empty,
 					GetChildViewStyle(view.Style, childViewStyleAttr),
 					childElement.Elements());
@@ -746,10 +752,12 @@ namespace NUXML
 		/// <summary>
 		/// Sets view values parsed from XUML.
 		/// </summary>
-		private static void SetViewValues(View view, XElement xumlElement, View parent, ValueConverterContext context)
+		private static void SetViewValues(NGUIView view, XElement xumlElement, NGUIView parent, ValueConverterContext context)
 		{
 			if (view == null)
+			{
 				return;
+			}
 
 			var viewTypeData = GetViewTypeData(view.ViewTypeName);
 			foreach (var attribute in xumlElement.Attributes())

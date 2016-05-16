@@ -86,7 +86,9 @@ namespace NUXML
         public void Trigger()
         {
             if (IsDisabled)
+			{
                 return;
+			}
 
             // go through the entries and call them
             if (_viewActionEntries != null)
@@ -104,7 +106,9 @@ namespace NUXML
         public void Trigger(ActionData actionData)
         {
             if (IsDisabled)
+			{
                 return;
+			}
 
             // go through the entries and call them
             if (_viewActionEntries != null)

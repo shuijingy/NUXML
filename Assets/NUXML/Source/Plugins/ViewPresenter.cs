@@ -110,6 +110,11 @@ namespace NUXML
             InitializeViews(rootView.gameObject);
         }
 
+		public void InitializeNGUIViews(NGUIView rootView)
+		{
+			InitializeNGUIViews(rootView.gameObject);
+		}
+
         /// <summary>
         /// Initializes the views. Called once on root view at the start of the scene. Need to be called on any views created dynamically.
         /// </summary>
@@ -144,6 +149,39 @@ namespace NUXML
                 ++pass;
             }            
         }
+
+		public void InitializeNGUIViews(GameObject rootView)
+		{
+			if (rootView == null)
+			{
+				return;                
+			}
+
+			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitializeInternalDefaultValues());
+			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitializeInternal());
+			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitialize(),             true, null, TraversalAlgorithm.ReverseBreadthFirst);
+			rootView.ForThisAndEachChild<NGUIView>(x => x.TryPropagateBindings(),      true, null, TraversalAlgorithm.BreadthFirst);
+			rootView.ForThisAndEachChild<NGUIView>(x => x.TryQueueAllChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
+
+			// notify dictionary observers
+			ResourceDictionary.NotifyObservers();
+
+			// trigger change handlers
+			int pass = 0;
+			while (rootView.Find<NGUIView>(x => x.HasQueuedChangeHandlers))
+			{
+				if (pass >= 1000)
+				{
+					PrintTriggeredChangeHandlerOverflowError(pass, rootView);
+					break;
+				}
+
+				// as long as there are change handlers queued, go through all views and trigger them
+				rootView.ForThisAndEachChild<NGUIView>(x => x.TryTriggerChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
+				++pass;
+			}            
+		}
+
 
         /// <summary>
         /// Prints triggered change handler overflow error message.

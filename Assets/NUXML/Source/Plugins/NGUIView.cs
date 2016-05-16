@@ -193,13 +193,13 @@ namespace NUXML
 		public string ViewXumlName;
 
 		[NotSetFromXuml]
-		public List<ViewFieldBinding> ViewFieldBindings;
+		public List<NGUIViewFieldBinding> ViewFieldBindings;
 
 		[NotSetFromXuml]
-		public List<ViewActionEntry> ViewActionEntries;
+		public List<NGUIViewActionEntry>  ViewActionEntries;
 
 		[NotSetFromXuml]
-		public List<ViewFieldStateValue> ViewFieldStateValues;
+		public List<ViewFieldStateValue>  ViewFieldStateValues;
 
 		[NotSetFromXuml]
 		public List<string> SetViewFieldNames;
@@ -234,8 +234,8 @@ namespace NUXML
 		public NGUIView()
 		{
 			ViewTypeName = GetType().Name;
-			ViewFieldBindings    = new List<ViewFieldBinding>();
-			ViewActionEntries    = new List<ViewActionEntry>();
+			ViewFieldBindings    = new List<NGUIViewFieldBinding>();
+			ViewActionEntries    = new List<NGUIViewActionEntry>();
 			ViewFieldStateValues = new List<ViewFieldStateValue>();
 			SetViewFieldNames    = new List<string>();
 
@@ -602,7 +602,7 @@ namespace NUXML
 		/// <summary>
 		/// Sets view action entry.
 		/// </summary>
-		public void SetViewActionEntry(ViewActionEntry entry)
+		public void SetViewActionEntry(NGUIViewActionEntry entry)
 		{
 			// get view field data for binding target
 			var viewFieldData = GetViewFieldData(entry.ViewActionFieldName);
@@ -613,8 +613,8 @@ namespace NUXML
 			}
 
 			bool hasValue;
-			entry.SourceView = viewFieldData.SourceNGUIView;
-			ViewAction viewAction = viewFieldData.GetValue(out hasValue) as ViewAction;
+			entry.SourceNGUIView = viewFieldData.SourceNGUIView;
+			NGUIViewAction viewAction = viewFieldData.GetValue(out hasValue) as NGUIViewAction;
 			if (hasValue)
 			{
 				viewAction.AddEntry(entry);
@@ -1010,7 +1010,7 @@ namespace NUXML
 		/// </summary>
 		internal void AddBinding(string viewField, string bindingString)
 		{
-			ViewFieldBindings.Add(new ViewFieldBinding { ViewField = viewField, BindingString = bindingString });
+			ViewFieldBindings.Add(new NGUIViewFieldBinding { ViewField = viewField, BindingString = bindingString });
 		}
 
 		/// <summary>
@@ -1041,7 +1041,7 @@ namespace NUXML
 			else
 			{
 				// get mapped view-field path
-				var viewTypeData = NGUIViewData.GetViewTypeData(ViewTypeName);
+				var viewTypeData    = NGUIViewData.GetViewTypeData(ViewTypeName);
 				var mappedViewField = viewTypeData.GetMappedViewField(viewField);
 
 				// overwrite state value if it exist otherwise create a new one 
@@ -1080,9 +1080,10 @@ namespace NUXML
 		/// <summary>
 		/// Adds a view action handler for a certain view action.
 		/// </summary>
-		internal void AddViewActionEntry(string viewActionFieldName, string viewActionHandlerName, View parent)
+		internal void AddViewActionEntry(string viewActionFieldName, string viewActionHandlerName, NGUIView parent)
 		{
-			ViewActionEntries.Add(new ViewActionEntry { ParentView = parent, ViewActionFieldName = viewActionFieldName, ViewActionHandlerName = viewActionHandlerName });
+			ViewActionEntries.Add(new NGUIViewActionEntry 
+				{ ParentNGUIView = parent, ViewActionFieldName = viewActionFieldName, ViewActionHandlerName = viewActionHandlerName });
 		}
 
 		/// <summary>
@@ -1154,7 +1155,7 @@ namespace NUXML
 			QueueChangeHandler("LayoutChanged");
 
 			// inform parents of update
-			this.ForEachParent<NGUIView>(x => x.QueueChangeHandler("ChildLayoutChanged"));
+			this.ForEachParentNGUI<NGUIView>(x => x.QueueChangeHandler("ChildLayoutChanged"));
 		}
 
 		/// <summary>
@@ -1333,9 +1334,14 @@ namespace NUXML
 		/// <summary>
 		/// Creates a child view of specified type.
 		/// </summary>
-		public T CreateView<T>(int siblingIndex = -1, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
+		public T CreateView<T>(int siblingIndex = -1, 
+								ValueConverterContext context = null, 
+								string themeName = "", 
+								string id = "", 
+								string style = "", 
+								IEnumerable<XElement> contentXuml = null) where T : NGUIView
 		{
-			var view = ViewData.CreateView<T>(this, this, context, themeName, Id, style);
+			var view = NGUIViewData.CreateNGUIView<T>(this, this, context, themeName, Id, style);
 
 			// set view sibling index
 			if (siblingIndex > 0)
@@ -1350,7 +1356,7 @@ namespace NUXML
 		/// <summary>
 		/// Creates a view from a template and adds it to a parent at specified index.
 		/// </summary>
-		public static T CreateView<T>(T template, View layoutParent, int siblingIndex = -1) where T : View
+		public static T CreateView<T>(T template, NGUIView layoutParent, int siblingIndex = -1) where T : NGUIView
 		{
 			// instantiate template
 			var go = Instantiate(template.gameObject) as GameObject;            
@@ -1367,14 +1373,14 @@ namespace NUXML
 			}
 
 			view.IsTemplate.DirectValue = false;
-			view.IsDynamic.DirectValue = true;
+			view.IsDynamic.DirectValue  = true;
 			return view;
 		}
 
 		/// <summary>
 		/// Creates a child view from a template.
 		/// </summary>
-		public T CreateView<T>(T template, int siblingIndex = -1) where T : View
+		public T CreateView<T>(T template, int siblingIndex = -1) where T : NGUIView
 		{
 			return CreateView(template, this, siblingIndex);
 		}
@@ -1392,13 +1398,13 @@ namespace NUXML
 
 				if (includeViewField && viewFieldData.ViewFieldPath == viewFieldPath)
 				{
-					viewFieldData.NotifyValueObservers(new HashSet<ViewFieldData>());
+					viewFieldData.NotifyValueObservers(new HashSet<NGUIViewFieldData>());
 				}
 
-				if (viewFieldData.ViewFieldPathInfo.Dependencies.Count > 0 &&
-					viewFieldData.ViewFieldPathInfo.Dependencies.Contains(viewFieldPath))
+				if (viewFieldData.NGUIViewFieldPathInfo.Dependencies.Count > 0 &&
+					viewFieldData.NGUIViewFieldPathInfo.Dependencies.Contains(viewFieldPath))
 				{
-					viewFieldData.NotifyValueObservers(new HashSet<ViewFieldData>());
+					viewFieldData.NotifyValueObservers(new HashSet<NGUIViewFieldData>());
 				}
 			}
 		}
@@ -1422,7 +1428,7 @@ namespace NUXML
 		/// </summary>
 		public void InitializeViews()
 		{
-			ViewPresenter.Instance.InitializeViews(this);
+			ViewPresenter.Instance.InitializeNGUIViews(this);
 		}
 
 		/// <summary>

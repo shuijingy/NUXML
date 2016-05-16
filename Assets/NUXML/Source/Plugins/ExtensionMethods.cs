@@ -124,8 +124,8 @@ namespace NUXML
                     break;
 
                 case TraversalAlgorithm.ReverseBreadthFirst:
-                    Stack<T> componentStack = new Stack<T>();
-                    Stack<View> childStack = new Stack<View>();
+                    Stack<T>    componentStack = new Stack<T>();
+                    Stack<View> childStack     = new Stack<View>();
                     foreach (Transform child in view.gameObject.transform)
                     {
                         var childView = child.GetComponent<View>();
@@ -309,7 +309,9 @@ namespace NUXML
         {
             var parent = view.transform.parent;
             if (parent == null)
+			{
                 return;
+			}
 
             var component = parent.GetComponent<T>();
             if (component != null)
@@ -599,5 +601,485 @@ namespace NUXML
         }
 
         #endregion
+
+		#region NGUI related
+		/// <summary>
+		/// Traverses the view object tree and performs an action on each child until the action returns false.
+		/// </summary>
+		public static void DoUntil<T>(this NGUIView view, 
+									  Func<T, bool> action, 
+									  bool recursive = true, 
+			 						  NGUIView parent = null, 
+									  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			switch (traversalAlgorithm)
+			{
+			default:
+			case TraversalAlgorithm.DepthFirst:
+				foreach (Transform child in view.gameObject.transform)
+				{
+					bool skipChild = false;
+					var childView = child.GetComponent<NGUIView>();
+					if (parent != null)
+					{
+						if (childView.Parent != parent)
+						{
+							skipChild = true;
+						}
+					}
+
+					if (!skipChild)
+					{
+						var component = child.GetComponent<T>();
+						if (component != null)
+						{
+							var result = action(component);
+							if (!result)
+							{
+								// done traversing
+								return;
+							}
+						}
+					}
+
+					if (recursive)
+					{
+						childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
+					}
+				}
+				break;
+
+			case TraversalAlgorithm.BreadthFirst:
+				Queue<NGUIView> queue = new Queue<NGUIView>();
+				foreach (Transform child in view.gameObject.transform)
+				{
+					bool skipChild = false;
+					var childView = child.GetComponent<NGUIView>();
+					if (parent != null)
+					{
+						if (childView.Parent != parent.gameObject)
+						{
+							skipChild = true;
+						}
+					}
+
+					if (!skipChild)
+					{
+						var component = child.GetComponent<T>();
+						if (component != null)
+						{
+							var result = action(component);
+							if (!result)
+							{
+								// done traversing
+								return;
+							}
+						}
+					}
+
+					if (recursive)
+					{
+						// add children to queue
+						queue.Enqueue(childView);
+					}
+				}
+
+				foreach (var queuedView in queue)
+				{
+					queuedView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
+				}
+				break;
+
+			case TraversalAlgorithm.ReverseDepthFirst:
+				foreach (Transform child in view.gameObject.transform)
+				{
+					var childView = child.GetComponent<NGUIView>();
+					if (recursive)
+					{
+						childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
+					}
+
+					if (parent != null)
+					{
+						if (childView.Parent != parent.gameObject)
+						{
+							continue;
+						}
+					}
+
+					var component = child.GetComponent<T>();
+					if (component != null)
+					{
+						var result = action(component);
+						if (!result)
+						{
+							// done traversing
+							return;
+						}
+					}
+				}
+				break;
+
+			case TraversalAlgorithm.ReverseBreadthFirst:
+				Stack<T>    componentStack = new Stack<T>();
+				Stack<NGUIView> childStack     = new Stack<NGUIView>();
+				foreach (Transform child in view.gameObject.transform)
+				{
+					var childView = child.GetComponent<NGUIView>();
+					if (recursive)
+					{
+						childStack.Push(childView);
+					}
+
+					if (parent != null)
+					{
+						if (childView.Parent != parent.gameObject)
+						{
+							continue;
+						}
+					}
+
+					var component = child.GetComponent<T>();
+					if (component != null)
+					{
+						componentStack.Push(component);
+					}
+				}
+
+				foreach (var childStackView in childStack)
+				{
+					childStackView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
+				}
+
+				foreach (T component in componentStack)
+				{
+					var result = action(component);
+					if (!result)
+					{
+						// done traversing
+						return;
+					}
+				}
+
+				break;
+			}
+		}
+
+		/// <summary>
+		/// Traverses the view object tree and performs an action on each child until the action returns false.
+		/// </summary>
+		public static void ForEachChild<T>(this NGUIView view, 
+										   Action<T> action, 
+										   bool recursive = true, 
+										   NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			view.DoUntil<T>(x => { action(x); return true; }, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Traverses the view object tree and performs an action on this view and its children until the action returns false.
+		/// </summary>
+		public static void ForThisAndEachChild<T>(this NGUIView view, 
+												  Action<T> action, 
+												  bool recursive = true, 
+												  NGUIView parent = null, 
+												  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var thisView = view.gameObject.GetComponent<T>();
+			if (thisView != null)
+			{
+				action(thisView);
+			}
+			view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Traverses the view object tree and performs an action on each child until the action returns false.
+		/// </summary>
+		public static void ForEachChild<T>(this GameObject gameObject, 
+										   Action<T> action, bool recursive = true, 
+										   NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<NGUIView>();
+			if (view != null)
+			{
+				view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
+			}
+		}
+
+		/// <summary>
+		/// Traverses the view object tree and performs an action on each child until the action returns false.
+		/// </summary>
+		public static void ForThisAndEachChild<T>(this GameObject gameObject, 
+												  Action<T> action, 
+												  bool recursive = true,
+												  NGUIView parent = null,
+												  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<T>();
+			if (view != null)
+			{
+				action(view);
+				view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
+			}
+		}
+
+		/// <summary>
+		/// Traverses the view object tree and returns the first view that matches the predicate.
+		/// </summary>
+		public static T Find<T>(this NGUIView view, 
+								Predicate<T> predicate, 
+								bool recursive = true, 
+								NGUIView parent = null, 
+								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			T result = null;
+			view.DoUntil<T>(x =>
+				{
+					if (predicate(x))
+					{
+						result = x;
+						return false;
+					}
+					return true;
+				}, recursive, parent, traversalAlgorithm);
+			return result;
+		}
+
+		/// <summary>
+		/// Returns first view of type T found.
+		/// </summary>
+		public static T Find<T>(this NGUIView view, 
+								bool recursive = true, 
+								NGUIView parent = null, 
+								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Returns first view of type T found.
+		/// </summary>
+		public static T Find<T>(this GameObject gameObject, 
+								Predicate<T> predicate, 
+								bool recursive = true, 
+								NGUIView parent = null, 
+								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<NGUIView>();
+			if (view == null)
+			{
+				return null;
+			}
+
+			return view.Find<T>(predicate, recursive, parent, traversalAlgorithm);            
+		}
+
+		/// <summary>
+		/// Returns first view of type T found.
+		/// </summary>
+		public static T Find<T>(this GameObject gameObject, 
+								bool recursive = true, 
+								NGUIView parent = null, 
+								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<NGUIView>();
+			if (view == null)
+			{
+				return null;
+			}
+
+			return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Returns first view of type T with the specified ID.
+		/// </summary>
+		public static T Find<T>(this NGUIView view, 
+								string id, bool recursive = true, 
+								NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			return view.Find<T>(x => String.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase), recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Returns first ascendant of type T found that matches the predicate.
+		/// </summary>
+		public static T FindParent<T>(this NGUIView view, Predicate<T> predicate) where T : NGUIView
+		{
+			var parent = view.LayoutParent;
+			if (parent == null)
+			{
+				return null;
+			}                        
+			else if (parent is T && predicate(parent as T))
+			{
+				return parent as T;
+			}
+			else
+			{
+				return parent.FindParent(predicate);
+			}
+		}
+
+		/// <summary>
+		/// Returns first ascendant of type T found.
+		/// </summary>
+		public static T FindParent<T>(this NGUIView view) where T : NGUIView
+		{           
+			return view.FindParent<T>(x => true);
+		}
+
+		/// <summary>
+		/// Performs an action on all ascendants of a view.
+		/// </summary>
+		public static void ForEachParentNGUI<T>(this NGUIView view, Action<T> action) where T : NGUIView
+		{
+			var parent = view.transform.parent;
+			if (parent == null)
+			{
+				return;
+			}
+
+			var component = parent.GetComponent<T>();
+			if (component != null)
+			{
+				action(component);
+			}
+
+			parent.gameObject.ForEachParentNGUI(action);
+		}
+
+		/// <summary>
+		/// Performs an action on all ascendants of a view.
+		/// </summary>
+		public static void ForEachParentNGUI<T>(this GameObject gameObject, Action<T> action) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<NGUIView>();
+			if (view != null)
+			{
+				view.ForEachParentNGUI<T>(action);
+			}
+		}
+
+		/// <summary>
+		/// Performs an action on this view and all its ascendants.
+		/// </summary>
+		public static void ForThisAndEachParent<T>(this GameObject gameObject, Action<T> action) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<T>();
+			if (view != null)
+			{
+				action(view);
+			}
+
+			gameObject.ForEachParentNGUI<T>(action);
+		}
+
+		/// <summary>
+		/// Performs an action on this view and all its ascendants.
+		/// </summary>
+		public static void ForThisAndEachParent<T>(this NGUIView view, Action<T> action) where T : NGUIView
+		{
+			var thisView = view.gameObject.GetComponent<T>();
+			if (thisView != null)
+			{
+				action(thisView);
+			}
+			view.ForEachParentNGUI<T>(action);            
+		}
+
+		/// <summary>
+		/// Gets a list of all descendants. 
+		/// </summary>
+		public static List<T> GetChildren<T>(this NGUIView view, 
+											 bool recursive = true, 
+											 NGUIView parent = null, 
+											 TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			return view.GetChildren<T>(x => true, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Gets a list of all descendants matching the predicate. 
+		/// </summary>
+		public static List<T> GetChildren<T>(this NGUIView view, 
+											Func<T, bool> predicate = null, 
+											bool recursive = true, 
+											NGUIView parent = null, 
+											TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var children = new List<T>();
+			view.ForEachChild<T>(x =>
+			{
+				if (predicate(x))
+				{
+					children.Add(x);
+				}
+			}, recursive, parent, traversalAlgorithm);
+
+			return children;
+		}
+
+		/// <summary>
+		/// Gets a list of all descendants matching the predicate. 
+		/// </summary>
+		public static List<T> GetChildren<T>(this GameObject gameObject, 
+											Func<T, bool> predicate = null, 
+											bool recursive = true, 
+											NGUIView parent = null, 
+											TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+		{
+			var view = gameObject.GetComponent<NGUIView>();
+			if (view == null)
+			{
+				return new List<T>();
+			}
+
+			return view.GetChildren<T>(predicate, recursive, parent, traversalAlgorithm);
+		}
+
+		/// <summary>
+		/// Destroys a view.
+		/// </summary>
+		public static void Destroy(this NGUIView view, bool immediate = false)
+		{
+			view.IsDestroyed.DirectValue = true;
+			if (Application.isPlaying && !immediate)
+			{
+				GameObject.Destroy(view.gameObject);
+			}
+			else
+			{
+				GameObject.DestroyImmediate(view.gameObject);
+			}
+		}
+
+		/// <summary>
+		/// Destroys all children of a view.
+		/// </summary>
+		public static void DestroyChildren(this NGUIView view, bool immediate = false)
+		{
+			int childCount = view.transform.childCount;
+			for (int i = childCount - 1; i >= 0; --i)
+			{
+				var go = view.transform.GetChild(i).gameObject;
+				var childView = go.GetComponent<NGUIView>();
+				if (childView != null)
+				{
+					childView.IsDestroyed.DirectValue = true;
+				}
+
+				if (Application.isPlaying && !immediate)
+				{
+					GameObject.Destroy(go);
+				}
+				else
+				{
+					GameObject.DestroyImmediate(go);
+				}
+			}
+		}
+		#endregion
     }
 }

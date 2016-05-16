@@ -81,7 +81,9 @@ namespace NUXML
                 Initialize();
 
                 if (!_initialized)
+				{
                     return;
+				}
             }
 
             if (_hasActionDataParameter)

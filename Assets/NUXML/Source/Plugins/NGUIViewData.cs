@@ -635,16 +635,16 @@ namespace NUXML
 			}
 
 			// search for a content placeholder
-			ContentPlaceholder contentContainer = view.Find<ContentPlaceholder>(true, view);
-			var contentLayoutParent = view;
-			if (contentContainer != null)
-			{
-				contentLayoutParent = contentContainer.LayoutParent;
-				view.Content = contentLayoutParent;
-
-				// remove placeholder
-				GameObject.DestroyImmediate(contentContainer.gameObject);
-			}
+//			ContentPlaceholder contentContainer = view.Find<ContentPlaceholder>(true, view);
+//			var contentLayoutParent = view;
+//			if (contentContainer != null)
+//			{
+//				contentLayoutParent = contentContainer.LayoutParent;
+//				view.Content = contentLayoutParent;
+//
+//				// remove placeholder
+//				GameObject.DestroyImmediate(contentContainer.gameObject);
+//			}
 
 			// parse content XUML and for each content child create views and set their values
 			if (contentXuml != null)
@@ -657,8 +657,8 @@ namespace NUXML
 					var contentThemeAttr = contentElement.Attribute("Theme");
 					var contentContext = GetValueConverterContext(context, contentElement, view.GameObjectName);
 
-					var contentView = CreateView(contentElement.Name.LocalName, contentLayoutParent, parent, contentContext,
-						contentThemeAttr != null ? contentThemeAttr.Value : theme,
+					var contentView = CreateNGUIView(contentElement.Name.LocalName, contentLayoutParent, parent, contentContext,
+						contentThemeAttr     != null ? contentThemeAttr.Value     : theme,
 						contentElementIdAttr != null ? contentElementIdAttr.Value : String.Empty,
 						GetChildViewStyle(view.Style, contentElementStyleAttr),
 						contentElement.Elements());
@@ -670,7 +670,7 @@ namespace NUXML
 			foreach (var referenceField in viewTypeData.ReferenceFields)
 			{
 				// is this a reference to a view?
-				var referencedView = view.Find<View>(x => String.Equals(x.Id, referenceField, StringComparison.OrdinalIgnoreCase),
+				var referencedView = view.Find<NGUIView>(x => String.Equals(x.Id, referenceField, StringComparison.OrdinalIgnoreCase),
 					true, view);
 				if (referencedView != null)
 				{
@@ -814,7 +814,7 @@ namespace NUXML
 				// check if we are setting a view action handler
 				if (viewFieldData.ViewFieldTypeName == "ViewAction")
 				{
-					viewFieldData.SourceView.AddViewActionEntry(viewFieldData.ViewFieldPath, viewFieldValue, parent);
+					viewFieldData.SourceNGUIView.AddViewActionEntry(viewFieldData.ViewFieldPath, viewFieldValue, parent);
 					continue;
 				}
 

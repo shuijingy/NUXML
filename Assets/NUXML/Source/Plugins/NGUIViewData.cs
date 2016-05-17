@@ -28,7 +28,7 @@ namespace NUXML
 		/// </summary>
 		public static void GenerateNGUIViews()
 		{
-			var viewPresenter = ViewPresenter.Instance;
+			var viewPresenter = NGUIViewPresenter.Instance;
 
 			viewPresenter.Views.Clear();
 			viewPresenter.Views.AddRange(viewPresenter.ViewTypeData.Where(y => !y.HideInPresenter).Select(x => x.ViewName).OrderBy(x => x));
@@ -612,10 +612,10 @@ namespace NUXML
 			{
 				Debug.Log("->> dependencyField: " + dependencyField);		
 				var dependencyFieldInfo = viewType.GetField(dependencyField);
-				var dependencyFieldInstance = TypeHelper.CreateInstance(dependencyFieldInfo.FieldType) as ViewFieldBase;
+				var dependencyFieldInstance = TypeHelper.CreateInstance(dependencyFieldInfo.FieldType) as NGUIViewFieldBase;
 				dependencyFieldInfo.SetValue(view, dependencyFieldInstance);
-				dependencyFieldInstance.ParentView = view;
-				dependencyFieldInstance.ViewFieldPath = dependencyField;
+				dependencyFieldInstance.ParentNGUIView = view;
+				dependencyFieldInstance.ViewFieldPath  = dependencyField;
 			}
 
 			// parse child XUML and for each child create views and set their values
@@ -645,26 +645,26 @@ namespace NUXML
 //				// remove placeholder
 //				GameObject.DestroyImmediate(contentContainer.gameObject);
 //			}
-
-			// parse content XUML and for each content child create views and set their values
-			if (contentXuml != null)
-			{
-				// create content views
-				foreach (var contentElement in contentXuml)
-				{
-					var contentElementIdAttr = contentElement.Attribute("Id");
-					var contentElementStyleAttr = contentElement.Attribute("Style");
-					var contentThemeAttr = contentElement.Attribute("Theme");
-					var contentContext = GetValueConverterContext(context, contentElement, view.GameObjectName);
-
-					var contentView = CreateNGUIView(contentElement.Name.LocalName, contentLayoutParent, parent, contentContext,
-						contentThemeAttr     != null ? contentThemeAttr.Value     : theme,
-						contentElementIdAttr != null ? contentElementIdAttr.Value : String.Empty,
-						GetChildViewStyle(view.Style, contentElementStyleAttr),
-						contentElement.Elements());
-					SetViewValues(contentView, contentElement, parent, contentContext);
-				}
-			}
+//
+//			// parse content XUML and for each content child create views and set their values
+//			if (contentXuml != null)
+//			{
+//				// create content views
+//				foreach (var contentElement in contentXuml)
+//				{
+//					var contentElementIdAttr = contentElement.Attribute("Id");
+//					var contentElementStyleAttr = contentElement.Attribute("Style");
+//					var contentThemeAttr = contentElement.Attribute("Theme");
+//					var contentContext = GetValueConverterContext(context, contentElement, view.GameObjectName);
+//
+//					var contentView = CreateNGUIView(contentElement.Name.LocalName, contentLayoutParent, parent, contentContext,
+//						contentThemeAttr     != null ? contentThemeAttr.Value     : theme,
+//						contentElementIdAttr != null ? contentElementIdAttr.Value : String.Empty,
+//						GetChildViewStyle(view.Style, contentElementStyleAttr),
+//						contentElement.Elements());
+//					SetViewValues(contentView, contentElement, parent, contentContext);
+//				}
+//			}
 
 			// set view references
 			foreach (var referenceField in viewTypeData.ReferenceFields)

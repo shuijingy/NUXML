@@ -771,7 +771,8 @@ namespace NUXML
 		public static void ForEachChild<T>(this NGUIView view, 
 										   Action<T> action, 
 										   bool recursive = true, 
-										   NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
+										   NGUIView parent = null, 
+										   TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
 		{
 			view.DoUntil<T>(x => { action(x); return true; }, recursive, parent, traversalAlgorithm);
 		}

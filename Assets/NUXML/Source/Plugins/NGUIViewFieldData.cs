@@ -293,7 +293,7 @@ namespace NUXML
 				if (fieldInfo == null && propertyInfo == null)
 				{
 					// no. check if it refers to a view in the hierarchy
-					var result = fieldData.TargetNGUIView.Find<View>(x => x.Id == viewFields[0], true, fieldData.TargetView);
+					var result = fieldData.TargetNGUIView.Find<NGUIView>(x => x.Id == viewFields[0], true, fieldData.TargetNGUIView);
 					if (result == null)
 					{
 						// no. assume that it refers to this view (in cases like x.SetValue(() => x.Field, value))

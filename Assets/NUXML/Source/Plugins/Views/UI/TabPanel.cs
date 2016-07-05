@@ -199,6 +199,13 @@ namespace NUXML.Views.UI
         #region TabListMask
 
         /// <summary>
+        /// Indicates if a list mask is to be used.
+        /// </summary>
+        /// <d>Boolean indicating if a list mask is to be used.</d>
+        [MapTo("TabHeaderList.UseListMask")]
+        public _bool TabListUseListMask;
+
+        /// <summary>
         /// The width of the list mask image.
         /// </summary>
         /// <d>Specifies the width of the list mask image either in pixels or percents.</d>
@@ -587,6 +594,10 @@ namespace NUXML.Views.UI
                 _selectedItem = tab.Item.Value;
                 SelectedItem.Value = tab.Item.Value;
                 SelectedTab = tab;
+                if (Items != null)
+                {
+                    Items.SetSelected(_selectedItem);
+                }
 
                 // trigger item selected action
                 if (TabSelected.HasEntries)
@@ -836,6 +847,7 @@ namespace NUXML.Views.UI
             {
                 // create default TabHeader                
                 tabHeader = ViewData.CreateView<TabHeader>(TabHeaderList.Content, tab.Parent, null, Theme, String.Empty, Style);
+                tabHeader.ParentList = TabHeaderList;
                 tabHeader.ParentTab = tab;
                 if (index >= 0)
                 {
@@ -854,6 +866,8 @@ namespace NUXML.Views.UI
             {
                 // move tab header to list
                 tabHeader.MoveTo(TabHeaderList.Content, index >= 0 ? index + 1 : -1);
+                tabHeader.ParentList = TabHeaderList;
+                TabHeaderList.QueueChangeHandler("LayoutChanged");
             }
 
             // make sure tab bindings are propagated to header
@@ -893,7 +907,7 @@ namespace NUXML.Views.UI
         {
             get
             {
-                if (!_tabItemTemplate)
+                if (_tabItemTemplate == null)
                 {
                     _tabItemTemplate = TabSwitcher.Find<Tab>(x => x.IsTemplate, false);
                 }

@@ -14,7 +14,7 @@ namespace NUXML
     {
         #region Fields
 
-        public T _value;
+        public T _internalValue;
 
         #endregion
 
@@ -27,12 +27,12 @@ namespace NUXML
         {
             get
             {
-                if (ParentView != null)
+                if (ParentView != null && IsMapped)
                 {
                     return (T)ParentView.GetValue(ViewFieldPath);
                 }
 
-                return _value;
+                return _internalValue;
             }
             set
             {
@@ -42,9 +42,9 @@ namespace NUXML
                 }
                 else
                 {
-                    _value = value;
+                    InternalValue = value;
                     _isSet = true;
-                }
+                }                
             }
         }
 
@@ -55,13 +55,13 @@ namespace NUXML
         {
             set
             {
-                if (ParentView != null)
+                if (ParentView != null && IsMapped)
                 {
                     ParentView.SetValue(ViewFieldPath, value, true, null, null, false);
                 }
                 else
                 {
-                    _value = value;
+                    _internalValue = value;
                     _isSet = true;
                 }
             }
@@ -82,6 +82,22 @@ namespace NUXML
                 {
                     return _isSet;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets internal value without considering mappings and without notifying observers.
+        /// </summary>
+        public T InternalValue
+        {
+            get
+            {
+                return _internalValue;
+            }
+            set
+            {
+                _internalValue = value;
+                TriggerValueSet();
             }
         }
 

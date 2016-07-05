@@ -17,8 +17,7 @@ namespace NUXML.Views.UI
     /// <summary>
     /// Base class for UI views.
     /// </summary>    
-    /// <d>Base class for UI views. 
-	/// Has fields for doing layout such as Width, Height, Margin, Alignment, Offset, etc. and fields for rendering a background image.</d>
+    /// <d>Base class for UI views. Has fields for doing layout such as Width, Height, Margin, Alignment, Offset, etc. and fields for rendering a background image.</d>
     [HideInPresenter]
     public class UIView : View
     {
@@ -70,14 +69,14 @@ namespace NUXML.Views.UI
         /// View offset.
         /// </summary>
         /// <d>Determines the offset of the content region relative to the view's position.</d>
-        [ChangeHandler("LayoutChanged")]
+        [ChangeHandler("OffsetChanged")]
         public _ElementMargin Offset;
 
         /// <summary>
         /// View offset from parent.
         /// </summary>
         /// <d>Used by parent views to adjust the positioning of its children without affecting the internal offset of the children.</d>
-        [ChangeHandler("LayoutChanged")]
+        [ChangeHandler("OffsetChanged")]
         public _ElementMargin OffsetFromParent;
 
         /// <summary>
@@ -194,7 +193,7 @@ namespace NUXML.Views.UI
         /// </summary>
         /// <d>Indicates whether this image should preserve its Sprite aspect ratio.</d>
         [MapTo("ImageComponent.preserveAspect")]
-        public _Sprite BackgroundImagePreserveAspect;
+        public _bool BackgroundImagePreserveAspect;
 
         /// <summary>
         /// Background image sprite.
@@ -237,7 +236,7 @@ namespace NUXML.Views.UI
         /// Layout root.
         /// </summary>
         /// <d>A reference to the layout root of the UI views.</d>
-        public UserInterface LayoutRoot;
+        protected UserInterface _layoutRoot;
         
         protected CanvasGroup _canvasGroup;
 
@@ -284,13 +283,33 @@ namespace NUXML.Views.UI
             //Debug.Log(String.Format("{0}.LayoutChanged called", ViewTypeName));
 
             if (!UpdateRectTransform) 
-			{
                 return; // rect transform is updated elsewhere
-			}
+
+            RectTransformChanged();            
+        }
+
+        /// <summary>
+        /// Called when the offset of the view has changed.
+        /// </summary>
+        public virtual void OffsetChanged()
+        {
+            if (!UpdateRectTransform)
+                return; // rect transform is updated elsewhere
+
+            RectTransformChanged();
+        }
+
+        /// <summary>
+        /// Called when fields affecting the rect transform of the view has changed.
+        /// </summary>
+        public virtual void RectTransformChanged()
+        {
+            if (!UpdateRectTransform)
+                return; // rect transform is updated elsewhere
 
             // update rectTransform
             // horizontal alignment and positioning
-            var width  = OverrideWidth.IsSet  ? OverrideWidth : Width;
+            var width = OverrideWidth.IsSet ? OverrideWidth : Width;
             var height = OverrideHeight.IsSet ? OverrideHeight : Height;
 
             float xMin = 0f;
@@ -425,16 +444,54 @@ namespace NUXML.Views.UI
         }
 
         /// <summary>
-        /// Called once to initialize the view.
+        /// Gets local point in view from screen point (e.g. mouse position).
         /// </summary>
-        public override void Initialize()
+        public Vector2 GetLocalPoint(Vector2 screenPoint)
         {
-            base.Initialize();
+            // get root canvas
+            UnityEngine.Canvas canvas = LayoutRoot.Canvas;
 
-            if (LayoutRoot == null)
+            // for screen space overlay the camera should be null
+            Camera worldCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+            // get local position of screen point
+            Vector2 pos;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(RectTransform, screenPoint, worldCamera, out pos);
+            return pos;
+        }
+
+        /// <summary>
+        /// Tests if mouse is over this view. 
+        /// </summary>
+        public bool ContainsMouse(Vector3 mousePosition, bool testChildren = false, bool ignoreFullScreenViews = false)
+        {
+            // get root canvas
+            UnityEngine.Canvas canvas = LayoutRoot.Canvas;
+
+            // for screen space overlay the camera should be null
+            Camera worldCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            if (RectTransformUtility.RectangleContainsScreenPoint(this.RectTransform, mousePosition, worldCamera)
+                && (!ignoreFullScreenViews || !IsFullScreen)
+                && gameObject.activeInHierarchy
+                && Alpha.Value > 0.99f)
             {
-                LayoutRoot = this.FindParent<UserInterface>();
+                return true;
             }
+
+            if (testChildren)
+            {
+                foreach (var child in this)
+                {
+                    UIView view = child as UIView;
+                    if (view == null)
+                        continue;
+                                            
+                    if (view.ContainsMouse(mousePosition, testChildren, ignoreFullScreenViews))
+                        return true;                    
+                }
+            }
+
+            return false;
         }
 
         #endregion
@@ -483,6 +540,46 @@ namespace NUXML.Views.UI
             }
         }
 
+        /// <summary>
+        /// Gets boolean indicating if view takes up the entire screen.
+        /// </summary>
+        public bool IsFullScreen
+        {
+            get
+            {
+                return RectTransform.rect.width >= Screen.width && RectTransform.rect.height >= Screen.height;
+            }
+        }
+
+        /// <summary>
+        /// Gets layout root canvas.
+        /// </summary>
+        public UserInterface LayoutRoot
+        {
+            get
+            {
+                if (_layoutRoot == null)
+                {
+                    if (this is UserInterface)
+                    {
+                        _layoutRoot = this as UserInterface;
+                    }
+                    else
+                    {
+                        _layoutRoot = this.FindParent<UserInterface>();
+                        if (_layoutRoot == null)
+                        {
+                        }
+                    }
+                }
+
+                return _layoutRoot;
+            }
+            set
+            {
+                _layoutRoot = value;
+            }
+        }
         #endregion
     }
 }

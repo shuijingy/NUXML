@@ -81,6 +81,14 @@ namespace System.Reflection
       {
          return type.GetRuntimeField(name);
       }
+      public static FieldInfo GetField(this Type type, string name, BindingFlags flags)
+      {
+         return type.GetRuntimeField(name);
+      }
+      public static IEnumerable<FieldInfo> GetFields(this Type type)
+      {
+         return type.GetRuntimeFields();
+      }
       public static MethodInfo GetMethod(this Type type, string name)
       {
          return type.GetRuntimeMethod(name, new Type[]{});
@@ -94,6 +102,16 @@ namespace System.Reflection
       public static PropertyInfo GetProperty(this Type type, string name)
       {
          return type.GetRuntimeProperty(name);
+      }   
+
+      public static PropertyInfo GetProperty(this Type type, string name, BindingFlags flags)
+      {
+         return type.GetRuntimeProperty(name);
+      }   
+
+      public static IEnumerable<PropertyInfo> GetProperties(this Type type)
+      {
+         return type.GetRuntimeProperties();
       }   
 
       public static bool IsAssignableFrom(this Type type, Type otherType){
@@ -143,14 +161,16 @@ public sealed class AppDomain
       {
          if (file.FileType == ".dll" || file.FileType == ".exe")
          {
-try{
-            var name = new AssemblyName() { Name = Path.GetFileNameWithoutExtension(file.Name) };
-            Assembly asm = Assembly.Load(name);
-            assemblies.Add(asm);
-}
-catch(Exception ex){
-UnityEngine.Debug.LogError("Couldn't load Assembly: "+file.Name);
-}
+            try
+            {
+                var name = new AssemblyName() { Name = Path.GetFileNameWithoutExtension(file.Name) };
+                Assembly asm = Assembly.Load(name);
+                assemblies.Add(asm);
+            }
+            catch
+            {
+                Debug.LogError("Couldn't load Assembly: " + file.Name);
+            }
          }
       }
 

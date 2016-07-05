@@ -17,19 +17,11 @@ namespace NUXML
     {
         #region Fields
 
-        public string ViewFieldPath;
         public View SourceView;
         public View TargetView;
-        public string TargetViewFieldPath;
         public bool TargetViewSet;
-        public ValueConverter ValueConverter;
-        public bool IsOwner;
-        public bool IsViewFieldBaseType;
         public ViewFieldPathInfo ViewFieldPathInfo;
-        public string ViewFieldTypeName;
-        public Type ViewFieldType;
-        public bool ViewFieldPathParsed;
-        public string ParseError;
+
         public bool SevereParseError;
         public bool PropagateFirst;
 
@@ -44,11 +36,8 @@ namespace NUXML
         /// <summary>
         /// Sets value of field.
         /// </summary>
-        public object SetValue(object inValue, 
-			                   HashSet<ViewFieldData> callstack, 
-			                   bool updateDefaultState = true,
-                               ValueConverterContext context = null, 
-			                   bool notifyObservers = true)
+        public object SetValue(object inValue, HashSet<ViewFieldData> callstack, bool updateDefaultState = true,
+            ValueConverterContext context = null, bool notifyObservers = true)
         {
             if (callstack.Contains(this))
                 return null;
@@ -68,7 +57,7 @@ namespace NUXML
             }
 
             // check if path has been parsed
-            if (!ViewFieldPathParsed)
+            if (!IsPathParsed)
             {
                 // attempt to parse path
                 if (!ParseViewFieldPath())
@@ -86,11 +75,22 @@ namespace NUXML
             }
 
             object value = inValue;
+            if (context == null)
+            {
+                if (SourceView.ValueConverterContext != null)
+                {
+                    context = SourceView.ValueConverterContext;
+                }
+                else
+                {
+                    context = ValueConverterContext.Default;
+                }
+            }
 
             // get converted value            
             if (ValueConverter != null)
             {
-                var conversionResult = ValueConverter.Convert(value, context != null ? context : ValueConverterContext.Default);
+                var conversionResult = ValueConverter.Convert(value, context);
                 if (!conversionResult.Success)
                 {
                     Debug.LogError(String.Format("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". Value converion failed. {3}", SourceView.GameObjectName, value, ViewFieldPath, conversionResult.ErrorMessage));
@@ -154,7 +154,7 @@ namespace NUXML
             else
             {
                 // check if path has been parsed
-                if (!ViewFieldPathParsed)
+                if (!IsPathParsed)
                 {
                     // attempt to parse path
                     if (!ParseViewFieldPath())
@@ -189,9 +189,25 @@ namespace NUXML
             if (_valueObservers == null)
                 return;
 
+            List<ValueObserver> removedObservers = null;
             foreach (var valueObserver in _valueObservers)
             {
-                valueObserver.Notify(callstack);
+                // notify observer
+                bool isRemoved = !valueObserver.Notify(callstack);
+                if (isRemoved)
+                {
+                    if (removedObservers == null)
+                    {
+                        removedObservers = new List<ValueObserver>();
+                    }
+
+                    removedObservers.Add(valueObserver);
+                }
+            }
+
+            if (removedObservers != null)
+            {
+                removedObservers.ForEach(x => _valueObservers.Remove(x));
             }
         }
 
@@ -203,12 +219,27 @@ namespace NUXML
             if (_valueObservers == null)
                 return;
 
+            List<ValueObserver> removedObservers = null;
             foreach (var valueObserver in _valueObservers)
             {
                 if (valueObserver is BindingValueObserver)
                 {
-                    valueObserver.Notify(callstack);
+                    bool isRemoved = !valueObserver.Notify(callstack);
+                    if (isRemoved)
+                    {
+                        if (removedObservers == null)
+                        {
+                            removedObservers = new List<ValueObserver>();
+                        }
+
+                        removedObservers.Add(valueObserver);
+                    }
                 }
+            }
+
+            if (removedObservers != null)
+            {
+                removedObservers.ForEach(x => _valueObservers.Remove(x));
             }
         }
 
@@ -238,13 +269,23 @@ namespace NUXML
                 return null;
 
             ViewFieldData fieldData = new ViewFieldData();
-            fieldData.ViewFieldPath = viewFieldPath;
             fieldData.TargetView = sourceView;
-            fieldData.TargetViewFieldPath = viewFieldPath;
             fieldData.SourceView = sourceView;
-            fieldData.IsOwner = true;
-            fieldData.ViewFieldPathInfo = new ViewFieldPathInfo();
-            fieldData.ViewFieldTypeName = sourceView.ViewTypeName;
+
+            var viewTypeData = sourceView.ViewTypeData;
+            var viewFieldPathInfo = viewTypeData.GetViewFieldPathInfo(viewFieldPath);
+            if (viewFieldPathInfo != null)
+            {
+                fieldData.ViewFieldPathInfo = viewFieldPathInfo;
+                return fieldData;
+            }
+            else
+            {
+                fieldData.ViewFieldPathInfo = new ViewFieldPathInfo();
+                fieldData.ViewFieldPathInfo.ViewFieldTypeName = sourceView.ViewTypeName;
+                fieldData.ViewFieldPathInfo.ViewFieldPath = viewFieldPath;
+                fieldData.ViewFieldPathInfo.TargetViewFieldPath = viewFieldPath;
+            }
 
             Type viewType = typeof(View);
             var viewFields = viewFieldPath.Split('.');
@@ -260,10 +301,12 @@ namespace NUXML
                 if (fieldInfo != null && viewType.IsAssignableFrom(fieldInfo.FieldType))
                 {
                     // yes. set target view and return
+                    fieldData.ViewFieldPathInfo.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
                     fieldData.ViewFieldPathInfo.MemberInfo.Add(fieldInfo);
-                    fieldData.IsOwner = false;
+                    fieldData.ViewFieldPathInfo.IsMapped = true;
+                    fieldData.ViewFieldPathInfo.IsPathParsed = true;
                     fieldData.TargetViewSet = false;
-                    fieldData.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
+                    viewTypeData.AddViewFieldPathInfo(viewFieldPath, fieldData.ViewFieldPathInfo);
                     return fieldData;
                 }
 
@@ -272,10 +315,12 @@ namespace NUXML
                 if (propertyInfo != null && viewType.IsAssignableFrom(propertyInfo.PropertyType))
                 {
                     // yes. set target view and return
+                    fieldData.ViewFieldPathInfo.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
                     fieldData.ViewFieldPathInfo.MemberInfo.Add(propertyInfo);
-                    fieldData.IsOwner = false;
+                    fieldData.ViewFieldPathInfo.IsMapped = true;
+                    fieldData.ViewFieldPathInfo.IsPathParsed = true;
                     fieldData.TargetViewSet = false;
-                    fieldData.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
+                    viewTypeData.AddViewFieldPathInfo(viewFieldPath, fieldData.ViewFieldPathInfo);
                     return fieldData;
                 }
 
@@ -291,10 +336,10 @@ namespace NUXML
                     }
 
                     // view found
-                    fieldData.IsOwner = false;
+                    fieldData.ViewFieldPathInfo.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
+                    fieldData.ViewFieldPathInfo.IsMapped = true;
                     fieldData.TargetViewSet = true;
                     fieldData.TargetView = result;
-                    fieldData.TargetViewFieldPath = String.Join(".", viewFields.Skip(1).ToArray());
                     return fieldData;
                 }
             }
@@ -310,18 +355,27 @@ namespace NUXML
         public bool ParseViewFieldPath()
         {
             SevereParseError = false;
-            ViewFieldPathParsed = false;
+
+            var viewTypeData = SourceView.ViewTypeData;
+            var viewFieldPath = viewTypeData.GetViewFieldPathInfo(ViewFieldPath);
+            if (viewFieldPath != null)
+            {
+                ViewFieldPathInfo = viewFieldPath;
+                return true;
+            }
+
+            ViewFieldPathInfo.IsPathParsed = false;
             ViewFieldPathInfo.MemberInfo.Clear();
             ViewFieldPathInfo.Dependencies.Clear();
 
             // if we get here we are the owner of the field and need to parse the path
-            var viewTypeData = ViewData.GetViewTypeData(SourceView.ViewTypeName);
-            ValueConverter = viewTypeData.GetViewFieldValueConverter(ViewFieldPath);
+            ViewFieldPathInfo.ValueConverter = viewTypeData.GetViewFieldValueConverter(ViewFieldPath);
 
             //Type viewFieldType = SourceView.GetType();
             var viewFields = ViewFieldPath.Split('.');
             object viewFieldObject = SourceView;
             var viewFieldBaseType = typeof(ViewFieldBase);
+            bool isGenericViewField = viewFields.Length > 0 ? viewTypeData.IsGenericViewField(viewFields[0]) : false;
 
             // parse view field path
             bool parseSuccess = true;
@@ -342,46 +396,45 @@ namespace NUXML
                 {
                     continue;
                 }
-                                
+
                 var viewFieldType = viewFieldObject.GetType();
                 var memberInfo = viewFieldType.GetFieldInfo(viewField);
                 if (memberInfo == null)
                 {
                     SevereParseError = true;
-                    ParseError = String.Format("Unable to parse view field path \"{0}\". Couldn't find member with the name \"{1}\".", ViewFieldPath, viewField);
+                    Utils.ErrorMessage = String.Format("Unable to parse view field path \"{0}\". Couldn't find member with the name \"{1}\".", ViewFieldPath, viewField);
                     return false;
                 }
 
                 ViewFieldPathInfo.MemberInfo.Add(memberInfo);
-                ViewFieldType = memberInfo.GetFieldType();
+                ViewFieldPathInfo.ViewFieldType = memberInfo.GetFieldType();
 
                 // handle special ViewFieldBase types
-                if (viewFieldBaseType.IsAssignableFrom(ViewFieldType))
+                if (viewFieldBaseType.IsAssignableFrom(ViewFieldPathInfo.ViewFieldType))
                 {
                     viewFieldObject = memberInfo.GetFieldValue(viewFieldObject);
                     if (viewFieldObject == null)
                     {
-                        ParseError = String.Format("Unable to parse view field path \"{0}\". Field/property with the name \"{1}\" was null.", ViewFieldPath, viewField);
+                        Utils.ErrorMessage = String.Format("Unable to parse view field path \"{0}\". Field/property with the name \"{1}\" was null.", ViewFieldPath, viewField);
                         parseSuccess = false;
                         continue;
                     }
 
-                    memberInfo = ViewFieldType.GetFieldInfo("_value"); // set internal dependency view field directly
+                    memberInfo = ViewFieldPathInfo.ViewFieldType.GetProperty("InternalValue"); // set internal dependency view field value
                     ViewFieldPathInfo.MemberInfo.Add(memberInfo);
-                    ViewFieldType = memberInfo.GetFieldType();
-                    IsViewFieldBaseType = isLastField;
+                    ViewFieldPathInfo.ViewFieldType = memberInfo.GetFieldType();
                 }
 
                 if (isLastField)
                 {
-                    ViewFieldType = memberInfo.GetFieldType();
-                    ViewFieldTypeName = ViewFieldType.Name;
-                    ValueConverter = ValueConverter ?? ViewData.GetValueConverterForType(ViewFieldTypeName);
+                    ViewFieldPathInfo.ViewFieldType = memberInfo.GetFieldType();
+                    ViewFieldPathInfo.ViewFieldTypeName = ViewFieldPathInfo.ViewFieldType.Name;
+                    ViewFieldPathInfo.ValueConverter = ValueConverter ?? ViewData.GetValueConverterForType(ViewFieldTypeName);
 
                     // handle special case if converter is null and field type is enum
-                    if (ValueConverter == null && ViewFieldType.IsEnum())
+                    if (ValueConverter == null && ViewFieldPathInfo.ViewFieldType.IsEnum())
                     {
-                        ValueConverter = new EnumValueConverter(ViewFieldType);
+                        ViewFieldPathInfo.ValueConverter = new EnumValueConverter(ViewFieldPathInfo.ViewFieldType);
                     }
                 }
                 else
@@ -391,13 +444,18 @@ namespace NUXML
 
                 if (viewFieldObject == null)
                 {
-                    ParseError = String.Format("Unable to parse view field path \"{0}\". Field/property with the name \"{1}\" was null.", ViewFieldPath, viewField);
+                    Utils.ErrorMessage = String.Format("Unable to parse view field path \"{0}\". Field/property with the name \"{1}\" was null.", ViewFieldPath, viewField);
                     parseSuccess = false;
                     continue;
                 }
             }
 
-            ViewFieldPathParsed = parseSuccess;
+            ViewFieldPathInfo.IsPathParsed = parseSuccess;
+            if (parseSuccess && !isGenericViewField)
+            {
+                viewTypeData.AddViewFieldPathInfo(ViewFieldPath, ViewFieldPathInfo);
+            }
+
             return parseSuccess;
         }
 
@@ -420,13 +478,95 @@ namespace NUXML
         /// </summary>
         public bool IsSet()
         {
-            if (_isSetInitialized || _isSet) 
+            if (_isSetInitialized || _isSet)
                 return _isSet;
 
             // check with source view if the view field has been set
             _isSetInitialized = true;
             _isSet = SourceView.GetIsSetFieldValue(ViewFieldPath);
             return _isSet;
+        }
+
+        #endregion
+
+
+        #region Properties
+
+        /// <summary>
+        /// Gets view field value converter.
+        /// </summary>
+        public ValueConverter ValueConverter
+        {
+            get
+            {
+                return ViewFieldPathInfo.ValueConverter;
+            }
+        }
+
+        /// <summary>
+        /// Gets view field type name.
+        /// </summary>
+        public string ViewFieldTypeName
+        {
+            get
+            {
+                return ViewFieldPathInfo.ViewFieldTypeName;
+            }
+        }
+
+        /// <summary>
+        /// Gets view field type.
+        /// </summary>
+        public Type ViewFieldType
+        {
+            get
+            {
+                return ViewFieldPathInfo.ViewFieldType;
+            }
+        }
+
+        /// <summary>
+        /// Gets view field path.
+        /// </summary>
+        public string ViewFieldPath
+        {
+            get
+            {
+                return ViewFieldPathInfo.ViewFieldPath;
+            }
+        }
+
+        /// <summary>
+        /// Gets target view field path.
+        /// </summary>
+        public string TargetViewFieldPath
+        {
+            get
+            {
+                return ViewFieldPathInfo.TargetViewFieldPath;
+            }
+        }
+
+        /// <summary>
+        /// Gets boolean indicating if path has been parsed.
+        /// </summary>
+        public bool IsPathParsed
+        {
+            get
+            {
+                return ViewFieldPathInfo.IsPathParsed;
+            }
+        }
+
+        /// <summary>
+        /// Returns boolean indicating if this view field is the owner of the value (not mapped to another view).
+        /// </summary>
+        public bool IsOwner
+        {
+            get
+            {
+                return !ViewFieldPathInfo.IsMapped;
+            }
         }
 
         #endregion

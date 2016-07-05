@@ -31,13 +31,10 @@ namespace NUXML
         /// <summary>
         /// Notifies the value observer.
         /// </summary>
-        public virtual void Notify(HashSet<ViewFieldData> callstack)
+        public virtual bool Notify(HashSet<ViewFieldData> callstack)
         {
+            return true;
         }
-
-		public virtual void Notify(HashSet<NGUIViewFieldData> callstack)
-		{
-		}
 
         #endregion
     }

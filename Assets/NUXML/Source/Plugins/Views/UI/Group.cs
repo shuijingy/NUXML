@@ -202,7 +202,7 @@ namespace NUXML.Views.UI
                 }
 
                 // update child layout
-                view.LayoutChanged();
+                view.RectTransformChanged();
                 ++childIndex;
             }
 

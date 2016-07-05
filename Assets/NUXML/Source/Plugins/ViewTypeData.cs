@@ -29,6 +29,7 @@ namespace NUXML
         public List<string> FieldsNotSetFromXuml;
         public List<string> ExcludedComponentFields;
         public List<string> ViewFields;
+        public List<string> GenericViewFields;
         public List<MapViewFieldData> MapViewFields;
         public List<ViewFieldConverterData> ViewFieldConverters;
         public List<ViewFieldChangeHandler> ViewFieldChangeHandlers;
@@ -43,6 +44,9 @@ namespace NUXML
         private List<ViewTypeData> _dependencies;
 
         [NonSerialized]
+        private HashSet<string> _genericViewFields;
+
+        [NonSerialized]
         private Dictionary<string, MapViewFieldData> _mappedViewFields;
 
         [NonSerialized]
@@ -50,6 +54,12 @@ namespace NUXML
 
         [NonSerialized]
         private Dictionary<string, ViewFieldChangeHandler> _viewFieldChangeHandlers;
+
+        [NonSerialized]
+        private Dictionary<string, FieldInfo> _viewFields;
+
+        [NonSerialized]
+        private Dictionary<string, ViewFieldPathInfo> _viewFieldPathInfo;
 
         #endregion        
 
@@ -65,6 +75,7 @@ namespace NUXML
             DependencyFields = new List<string>();
             ComponentFields = new List<string>();
             ReferenceFields = new List<string>();
+            GenericViewFields = new List<string>();
             FieldsNotSetFromXuml = new List<string>();
             ExcludedComponentFields = new List<string>();
             ViewFields = new List<string>();
@@ -137,6 +148,62 @@ namespace NUXML
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Returns view field.
+        /// </summary>
+        public FieldInfo GetViewField(string field)
+        {
+            if (_viewFields == null)
+            {
+                _viewFields = new Dictionary<string, FieldInfo>();
+                var viewType = ViewData.GetViewType(ViewName);                
+                foreach (var viewField in viewType.GetFields())
+                {
+                    _viewFields.Add(viewField.Name, viewField);                    
+                }
+            }
+
+            return _viewFields.Get(field);
+        }
+
+        /// <summary>
+        /// Gets view field path info for the field.
+        /// </summary>
+        public ViewFieldPathInfo GetViewFieldPathInfo(string viewFieldPath)
+        {
+            return _viewFieldPathInfo != null ? _viewFieldPathInfo.Get(viewFieldPath) : null;
+        }
+
+        /// <summary>
+        /// Adds view field path info.
+        /// </summary>
+        public void AddViewFieldPathInfo(string viewFieldPath, ViewFieldPathInfo viewFieldPathInfo)
+        {
+            if (_viewFieldPathInfo == null)
+            {
+                _viewFieldPathInfo = new Dictionary<string, ViewFieldPathInfo>();
+            }
+
+            _viewFieldPathInfo.Add(viewFieldPath, viewFieldPathInfo);
+        }
+
+        /// <summary>
+        /// Gets boolean indicating if the view field is generic.
+        /// </summary>
+        public bool IsGenericViewField(string viewField)
+        {
+            if (_genericViewFields == null)
+            {
+                _genericViewFields = new HashSet<string>();
+                foreach (var genericViewField in GenericViewFields)
+                {
+                    _genericViewFields.Add(genericViewField);
+                }
+            }
+
+            return _genericViewFields.Contains(viewField);
         }
 
         #endregion

@@ -17,12 +17,11 @@ namespace NUXML
     {
         #region Fields
 
-        public View     ParentView;
-		public NGUIView ParentNGUIView;
-
-        public string   ChangeHandlerName;
-        public bool     TriggerImmediately;
-        public bool     IsValid;
+        public View      ParentView;
+		public NGUIView  ParentNGUIView;
+        public string    ChangeHandlerName;
+        public bool      TriggerImmediately;
+        public bool      IsValid;
 
         private MethodInfo _changeHandlerMethod;
 
@@ -43,13 +42,14 @@ namespace NUXML
             IsValid = _changeHandlerMethod != null;
         }
 
-		public ChangeHandlerValueObserver(NGUIView parentView, string changeHandlerName, bool triggerImmediately)
+		//TODO
+		public ChangeHandlerValueObserver(NGUIView parentNGUIView, string changeHandlerName, bool triggerImmediately)
 		{
-			ParentNGUIView = parentView;
+			ParentNGUIView     = parentNGUIView;
 			ChangeHandlerName  = changeHandlerName;
 			TriggerImmediately = triggerImmediately;
 
-			_changeHandlerMethod = ParentNGUIView.GetType().GetMethod(ChangeHandlerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			_changeHandlerMethod = ParentView.GetType().GetMethod(ChangeHandlerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			IsValid = _changeHandlerMethod != null;
 		}
 
@@ -60,7 +60,7 @@ namespace NUXML
         /// <summary>
         /// Notifies the change handler value observer that value has changed.
         /// </summary>
-        public override void Notify(HashSet<ViewFieldData> callstack)
+        public override bool Notify(HashSet<ViewFieldData> callstack)
         {
             if (TriggerImmediately)
             {
@@ -70,6 +70,8 @@ namespace NUXML
             {
                 ParentView.QueueChangeHandler(ChangeHandlerName);
             }
+
+            return true;
         }
 
         /// <summary>

@@ -29,6 +29,11 @@ namespace NUXML
                     {
                         bool skipChild = false;
                         var childView = child.GetComponent<View>();
+                        if (childView == null)
+                        {
+                            continue;
+                        }
+
                         if (parent != null)
                         {
                             if (childView.Parent != parent)
@@ -62,6 +67,11 @@ namespace NUXML
                     {
                         bool skipChild = false;
                         var childView = child.GetComponent<View>();
+                        if (childView == null)
+                        {
+                            continue;
+                        }
+
                         if (parent != null)
                         {
                             if (childView.Parent != parent.gameObject)
@@ -99,6 +109,11 @@ namespace NUXML
                     foreach (Transform child in view.gameObject.transform)
                     {
                         var childView = child.GetComponent<View>();
+                        if (childView == null)
+                        {
+                            continue;
+                        }
+
                         if (recursive)
                         {
                             childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
@@ -124,11 +139,16 @@ namespace NUXML
                     break;
 
                 case TraversalAlgorithm.ReverseBreadthFirst:
-                    Stack<T>    componentStack = new Stack<T>();
-                    Stack<View> childStack     = new Stack<View>();
+                    Stack<T> componentStack = new Stack<T>();
+                    Stack<View> childStack = new Stack<View>();
                     foreach (Transform child in view.gameObject.transform)
                     {
                         var childView = child.GetComponent<View>();
+                        if (childView == null)
+                        {
+                            continue;
+                        }
+
                         if (recursive)
                         {
                             childStack.Push(childView);
@@ -229,7 +249,7 @@ namespace NUXML
             }, recursive, parent, traversalAlgorithm);
             return result;
         }
-        
+
         /// <summary>
         /// Returns first view of type T found.
         /// </summary>
@@ -248,8 +268,8 @@ namespace NUXML
             {
                 return null;
             }
-            
-            return view.Find<T>(predicate, recursive, parent, traversalAlgorithm);            
+
+            return view.Find<T>(predicate, recursive, parent, traversalAlgorithm);
         }
 
         /// <summary>
@@ -283,7 +303,7 @@ namespace NUXML
             if (parent == null)
             {
                 return null;
-            }                        
+            }
             else if (parent is T && predicate(parent as T))
             {
                 return parent as T;
@@ -298,7 +318,7 @@ namespace NUXML
         /// Returns first ascendant of type T found.
         /// </summary>
         public static T FindParent<T>(this View view) where T : View
-        {           
+        {
             return view.FindParent<T>(x => true);
         }
 
@@ -309,9 +329,7 @@ namespace NUXML
         {
             var parent = view.transform.parent;
             if (parent == null)
-			{
                 return;
-			}
 
             var component = parent.GetComponent<T>();
             if (component != null)
@@ -358,7 +376,7 @@ namespace NUXML
             {
                 action(thisView);
             }
-            view.ForEachParent<T>(action);            
+            view.ForEachParent<T>(action);
         }
 
         /// <summary>
@@ -375,6 +393,11 @@ namespace NUXML
         public static List<T> GetChildren<T>(this View view, Func<T, bool> predicate = null, bool recursive = true, View parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : View
         {
             var children = new List<T>();
+            if (predicate == null)
+            {
+                predicate = x => true;
+            }
+
             view.ForEachChild<T>(x =>
             {
                 if (predicate(x))
@@ -401,6 +424,37 @@ namespace NUXML
         }
 
         /// <summary>
+        /// Gets child at index.
+        /// </summary>
+        public static View GetChild(this View view, int index, bool countOnlyActive = false)
+        {
+            if (!countOnlyActive)
+            {
+                var child = view.gameObject.transform.GetChild(index);
+                return child.GetComponent<View>();
+            }
+
+            int i = 0;
+            foreach (Transform child in view.gameObject.transform)
+            {
+                var childView = child.GetComponent<View>();
+                if (childView == null || !childView.IsActive)
+                {
+                    continue;
+                }
+
+                if (i == index)
+                {
+                    return childView;
+                }
+
+                ++i;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Destroys a view.
         /// </summary>
         public static void Destroy(this View view, bool immediate = false)
@@ -414,6 +468,21 @@ namespace NUXML
             {
                 GameObject.DestroyImmediate(view.gameObject);
             }
+        }
+
+        /// <summary>
+        /// Destroy a view or moves it back into view pool.
+        /// </summary>
+        public static void Destroy(this View view, ViewPool viewPool, bool immediate = false)
+        {
+            if (viewPool == null || viewPool.IsFull)
+            {
+                view.Destroy(immediate);
+                return;
+            }
+
+            // move view into view pool
+            viewPool.InsertView(view);
         }
 
         /// <summary>
@@ -475,7 +544,15 @@ namespace NUXML
         /// </summary>
         public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key)
         {
-            return dict.ContainsKey(key) ? dict[key] : default(TValue);
+            TValue value;
+            if (!dict.TryGetValue(key, out value))
+            {
+                return default(TValue);
+            }
+            else
+            {
+                return value;
+            }
         }
 
         /// <summary>
@@ -532,9 +609,9 @@ namespace NUXML
             var fieldInfo = type.GetField(field, bindingFlags);
             if (fieldInfo != null)
                 return fieldInfo;
-            
+
             var propertyInfo = type.GetProperty(field, bindingFlags);
-            return propertyInfo;            
+            return propertyInfo;
         }
 
         /// <summary>
@@ -600,487 +677,56 @@ namespace NUXML
             }
         }
 
+#if !UNITY_4_6 && !UNITY_5_0 && !UNITY_5_1
+        /// <summary>
+        /// Converts panel scrollbar visibility to unity scrollrect scrollbar visibility.
+        /// </summary>
+        public static UnityEngine.UI.ScrollRect.ScrollbarVisibility ToScrollRectVisibility(this PanelScrollbarVisibility visibility)
+        {
+            switch (visibility)
+            {
+                case PanelScrollbarVisibility.Permanent:
+                    return UnityEngine.UI.ScrollRect.ScrollbarVisibility.Permanent;
+                default:
+                case PanelScrollbarVisibility.AutoHide:
+                case PanelScrollbarVisibility.Hidden:
+                case PanelScrollbarVisibility.Remove:
+                    return UnityEngine.UI.ScrollRect.ScrollbarVisibility.AutoHide;
+                case PanelScrollbarVisibility.AutoHideAndExpandViewport:
+                    return UnityEngine.UI.ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Converts content alignment to pivot.
+        /// </summary>
+        public static Vector2 ToPivot(this ElementAlignment alignment)
+        {
+            switch (alignment)
+            {
+                default:
+                case ElementAlignment.Center:
+                    return new Vector2(0.5f, 0.5f);
+                case ElementAlignment.Left:
+                    return new Vector2(0, 0.5f);
+                case ElementAlignment.Top:
+                    return new Vector2(0.5f, 1);
+                case ElementAlignment.Right:
+                    return new Vector2(1, 0.5f);
+                case ElementAlignment.Bottom:
+                    return new Vector2(0.5f, 0);
+                case ElementAlignment.TopLeft:
+                    return new Vector2(0, 1);
+                case ElementAlignment.TopRight:
+                    return new Vector2(1, 1);
+                case ElementAlignment.BottomLeft:
+                    return new Vector2(0, 0);
+                case ElementAlignment.BottomRight:
+                    return new Vector2(1, 0);
+            }
+        }
+
         #endregion
-
-		#region NGUI related
-		/// <summary>
-		/// Traverses the view object tree and performs an action on each child until the action returns false.
-		/// </summary>
-		public static void DoUntil<T>(this NGUIView view, 
-									  Func<T, bool> action, 
-									  bool recursive = true, 
-			 						  NGUIView parent = null, 
-									  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			switch (traversalAlgorithm)
-			{
-			default:
-			case TraversalAlgorithm.DepthFirst:
-				foreach (Transform child in view.gameObject.transform)
-				{
-					bool skipChild = false;
-					var childView = child.GetComponent<NGUIView>();
-					if (parent != null)
-					{
-						if (childView.Parent != parent)
-						{
-							skipChild = true;
-						}
-					}
-
-					if (!skipChild)
-					{
-						var component = child.GetComponent<T>();
-						if (component != null)
-						{
-							var result = action(component);
-							if (!result)
-							{
-								// done traversing
-								return;
-							}
-						}
-					}
-
-					if (recursive)
-					{
-						childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
-					}
-				}
-				break;
-
-			case TraversalAlgorithm.BreadthFirst:
-				Queue<NGUIView> queue = new Queue<NGUIView>();
-				foreach (Transform child in view.gameObject.transform)
-				{
-					bool skipChild = false;
-					var childView = child.GetComponent<NGUIView>();
-					if (parent != null)
-					{
-						if (childView.Parent != parent.gameObject)
-						{
-							skipChild = true;
-						}
-					}
-
-					if (!skipChild)
-					{
-						var component = child.GetComponent<T>();
-						if (component != null)
-						{
-							var result = action(component);
-							if (!result)
-							{
-								// done traversing
-								return;
-							}
-						}
-					}
-
-					if (recursive)
-					{
-						// add children to queue
-						queue.Enqueue(childView);
-					}
-				}
-
-				foreach (var queuedView in queue)
-				{
-					queuedView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
-				}
-				break;
-
-			case TraversalAlgorithm.ReverseDepthFirst:
-				foreach (Transform child in view.gameObject.transform)
-				{
-					var childView = child.GetComponent<NGUIView>();
-					if (recursive)
-					{
-						childView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
-					}
-
-					if (parent != null)
-					{
-						if (childView.Parent != parent.gameObject)
-						{
-							continue;
-						}
-					}
-
-					var component = child.GetComponent<T>();
-					if (component != null)
-					{
-						var result = action(component);
-						if (!result)
-						{
-							// done traversing
-							return;
-						}
-					}
-				}
-				break;
-
-			case TraversalAlgorithm.ReverseBreadthFirst:
-				Stack<T>    componentStack = new Stack<T>();
-				Stack<NGUIView> childStack     = new Stack<NGUIView>();
-				foreach (Transform child in view.gameObject.transform)
-				{
-					var childView = child.GetComponent<NGUIView>();
-					if (recursive)
-					{
-						childStack.Push(childView);
-					}
-
-					if (parent != null)
-					{
-						if (childView.Parent != parent.gameObject)
-						{
-							continue;
-						}
-					}
-
-					var component = child.GetComponent<T>();
-					if (component != null)
-					{
-						componentStack.Push(component);
-					}
-				}
-
-				foreach (var childStackView in childStack)
-				{
-					childStackView.DoUntil<T>(action, recursive, parent, traversalAlgorithm);
-				}
-
-				foreach (T component in componentStack)
-				{
-					var result = action(component);
-					if (!result)
-					{
-						// done traversing
-						return;
-					}
-				}
-
-				break;
-			}
-		}
-
-		/// <summary>
-		/// Traverses the view object tree and performs an action on each child until the action returns false.
-		/// </summary>
-		public static void ForEachChild<T>(this NGUIView view, 
-										   Action<T> action, 
-										   bool recursive = true, 
-										   NGUIView parent = null, 
-										   TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			view.DoUntil<T>(x => { action(x); return true; }, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Traverses the view object tree and performs an action on this view and its children until the action returns false.
-		/// </summary>
-		public static void ForThisAndEachChild<T>(this NGUIView view, 
-												  Action<T> action, 
-												  bool recursive = true, 
-												  NGUIView parent = null, 
-												  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var thisView = view.gameObject.GetComponent<T>();
-			if (thisView != null)
-			{
-				action(thisView);
-			}
-			view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Traverses the view object tree and performs an action on each child until the action returns false.
-		/// </summary>
-		public static void ForEachChild<T>(this GameObject gameObject, 
-										   Action<T> action, bool recursive = true, 
-										   NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<NGUIView>();
-			if (view != null)
-			{
-				view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
-			}
-		}
-
-		/// <summary>
-		/// Traverses the view object tree and performs an action on each child until the action returns false.
-		/// </summary>
-		public static void ForThisAndEachChild<T>(this GameObject gameObject, 
-												  Action<T> action, 
-												  bool recursive = true,
-												  NGUIView parent = null,
-												  TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<T>();
-			if (view != null)
-			{
-				action(view);
-				view.ForEachChild<T>(action, recursive, parent, traversalAlgorithm);
-			}
-		}
-
-		/// <summary>
-		/// Traverses the view object tree and returns the first view that matches the predicate.
-		/// </summary>
-		public static T Find<T>(this NGUIView view, 
-								Predicate<T> predicate, 
-								bool recursive = true, 
-								NGUIView parent = null, 
-								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			T result = null;
-			view.DoUntil<T>(x =>
-				{
-					if (predicate(x))
-					{
-						result = x;
-						return false;
-					}
-					return true;
-				}, recursive, parent, traversalAlgorithm);
-			return result;
-		}
-
-		/// <summary>
-		/// Returns first view of type T found.
-		/// </summary>
-		public static T Find<T>(this NGUIView view, 
-								bool recursive = true, 
-								NGUIView parent = null, 
-								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Returns first view of type T found.
-		/// </summary>
-		public static T Find<T>(this GameObject gameObject, 
-								Predicate<T> predicate, 
-								bool recursive = true, 
-								NGUIView parent = null, 
-								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<NGUIView>();
-			if (view == null)
-			{
-				return null;
-			}
-
-			return view.Find<T>(predicate, recursive, parent, traversalAlgorithm);            
-		}
-
-		/// <summary>
-		/// Returns first view of type T found.
-		/// </summary>
-		public static T Find<T>(this GameObject gameObject, 
-								bool recursive = true, 
-								NGUIView parent = null, 
-								TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<NGUIView>();
-			if (view == null)
-			{
-				return null;
-			}
-
-			return view.Find<T>(x => true, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Returns first view of type T with the specified ID.
-		/// </summary>
-		public static T Find<T>(this NGUIView view, 
-								string id, bool recursive = true, 
-								NGUIView parent = null, TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			return view.Find<T>(x => String.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase), recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Returns first ascendant of type T found that matches the predicate.
-		/// </summary>
-		public static T FindParent<T>(this NGUIView view, Predicate<T> predicate) where T : NGUIView
-		{
-			var parent = view.LayoutParent;
-			if (parent == null)
-			{
-				return null;
-			}                        
-			else if (parent is T && predicate(parent as T))
-			{
-				return parent as T;
-			}
-			else
-			{
-				return parent.FindParent(predicate);
-			}
-		}
-
-		/// <summary>
-		/// Returns first ascendant of type T found.
-		/// </summary>
-		public static T FindParent<T>(this NGUIView view) where T : NGUIView
-		{           
-			return view.FindParent<T>(x => true);
-		}
-
-		/// <summary>
-		/// Performs an action on all ascendants of a view.
-		/// </summary>
-		public static void ForEachParentNGUI<T>(this NGUIView view, Action<T> action) where T : NGUIView
-		{
-			var parent = view.transform.parent;
-			if (parent == null)
-			{
-				return;
-			}
-
-			var component = parent.GetComponent<T>();
-			if (component != null)
-			{
-				action(component);
-			}
-
-			parent.gameObject.ForEachParentNGUI(action);
-		}
-
-		/// <summary>
-		/// Performs an action on all ascendants of a view.
-		/// </summary>
-		public static void ForEachParentNGUI<T>(this GameObject gameObject, Action<T> action) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<NGUIView>();
-			if (view != null)
-			{
-				view.ForEachParentNGUI<T>(action);
-			}
-		}
-
-		/// <summary>
-		/// Performs an action on this view and all its ascendants.
-		/// </summary>
-		public static void ForThisAndEachParent<T>(this GameObject gameObject, Action<T> action) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<T>();
-			if (view != null)
-			{
-				action(view);
-			}
-
-			gameObject.ForEachParentNGUI<T>(action);
-		}
-
-		/// <summary>
-		/// Performs an action on this view and all its ascendants.
-		/// </summary>
-		public static void ForThisAndEachParent<T>(this NGUIView view, Action<T> action) where T : NGUIView
-		{
-			var thisView = view.gameObject.GetComponent<T>();
-			if (thisView != null)
-			{
-				action(thisView);
-			}
-			view.ForEachParentNGUI<T>(action);            
-		}
-
-		/// <summary>
-		/// Gets a list of all descendants. 
-		/// </summary>
-		public static List<T> GetChildren<T>(this NGUIView view, 
-											 bool recursive = true, 
-											 NGUIView parent = null, 
-											 TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			return view.GetChildren<T>(x => true, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Gets a list of all descendants matching the predicate. 
-		/// </summary>
-		public static List<T> GetChildren<T>(this NGUIView view, 
-											Func<T, bool> predicate = null, 
-											bool recursive = true, 
-											NGUIView parent = null, 
-											TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var children = new List<T>();
-			view.ForEachChild<T>(x =>
-			{
-				if (predicate(x))
-				{
-					children.Add(x);
-				}
-			}, recursive, parent, traversalAlgorithm);
-
-			return children;
-		}
-
-		/// <summary>
-		/// Gets a list of all descendants matching the predicate. 
-		/// </summary>
-		public static List<T> GetChildren<T>(this GameObject gameObject, 
-											Func<T, bool> predicate = null, 
-											bool recursive = true, 
-											NGUIView parent = null, 
-											TraversalAlgorithm traversalAlgorithm = TraversalAlgorithm.DepthFirst) where T : NGUIView
-		{
-			var view = gameObject.GetComponent<NGUIView>();
-			if (view == null)
-			{
-				return new List<T>();
-			}
-
-			return view.GetChildren<T>(predicate, recursive, parent, traversalAlgorithm);
-		}
-
-		/// <summary>
-		/// Destroys a view.
-		/// </summary>
-		public static void Destroy(this NGUIView view, bool immediate = false)
-		{
-			view.IsDestroyed.DirectValue = true;
-			if (Application.isPlaying && !immediate)
-			{
-				GameObject.Destroy(view.gameObject);
-			}
-			else
-			{
-				GameObject.DestroyImmediate(view.gameObject);
-			}
-		}
-
-		/// <summary>
-		/// Destroys all children of a view.
-		/// </summary>
-		public static void DestroyChildren(this NGUIView view, bool immediate = false)
-		{
-			int childCount = view.transform.childCount;
-			for (int i = childCount - 1; i >= 0; --i)
-			{
-				var go = view.transform.GetChild(i).gameObject;
-				var childView = go.GetComponent<NGUIView>();
-				if (childView != null)
-				{
-					childView.IsDestroyed.DirectValue = true;
-				}
-
-				if (Application.isPlaying && !immediate)
-				{
-					GameObject.Destroy(go);
-				}
-				else
-				{
-					GameObject.DestroyImmediate(go);
-				}
-			}
-		}
-		#endregion
     }
 }

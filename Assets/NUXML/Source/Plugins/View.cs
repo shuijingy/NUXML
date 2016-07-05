@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 #endregion
 
 
@@ -22,8 +23,7 @@ namespace NUXML
     /// Base class for view models.
     /// </summary>
     /// <d>Base class for all view models in the framework. All view models must be a subclass of this class to be processed and managed the framework. </d>
-    [HideInPresenter]
-    public class View : MonoBehaviour
+    public class View : MonoBehaviour, IEnumerable<View>
     {
         #region Fields
 
@@ -148,6 +148,7 @@ namespace NUXML
         /// Item data.
         /// </summary>
         /// <d>Provides a mechanism to bind to dynamic list data. The item is set, e.g. by the List view on the child views it generates for its dynamic list data. The Item points to the list item data the view is associated with.</d>
+        [GenericViewField]
         public _object Item;
 
         /// <summary>
@@ -204,9 +205,13 @@ namespace NUXML
         [NotSetFromXuml]
         public List<string> SetViewFieldNames;
 
-        public static string DefaultStateName = "Default";
-        public static string AnyStateName     = "Any";
+        [NotSetFromXuml]
+        public ValueConverterContext ValueConverterContext;
 
+        public static string DefaultStateName = "Default";
+        public static string AnyStateName = "Any";
+
+        private ViewTypeData _viewTypeData;
         private Dictionary<string, ViewFieldData> _viewFieldData;
         private Dictionary<string, Dictionary<string, ViewFieldStateValue>> _stateValues;
         private Dictionary<string, Dictionary<string, StateAnimation>> _stateAnimations;
@@ -217,6 +222,7 @@ namespace NUXML
         private Dictionary<string, string>     _expressionViewField;
         private List<ViewAction>               _eventSystemViewActions;
         private bool   _isDefaultState;
+        private bool   _isInitialized;
         private string _previousState;
         private StateAnimation _stateAnimation;
 
@@ -275,6 +281,7 @@ namespace NUXML
         public object SetValue(string viewField, object value, bool updateDefaultState, HashSet<ViewFieldData> callstack, ValueConverterContext context, bool notifyObservers)
         {
             callstack = callstack ?? new HashSet<ViewFieldData>();
+            context = context ?? ValueConverterContext;
 
             // Debug.Log(String.Format("{0}: {1} = {2}", GameObjectName, viewField, value));
 
@@ -293,9 +300,10 @@ namespace NUXML
                 if (defaultStateValues != null)
                 {
                     // update default state value
-                    if (defaultStateValues.ContainsKey(viewField))
+                    ViewFieldStateValue defaultStateValue;
+                    if (defaultStateValues.TryGetValue(viewField, out defaultStateValue))
                     {
-                        defaultStateValues[viewField].SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
+                        defaultStateValue.SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
                     }
                 }
             }
@@ -927,7 +935,7 @@ namespace NUXML
         /// <summary>
         /// Called once at the end of a frame. Triggers queued change handlers.
         /// </summary>
-        public void LateUpdate()
+        public virtual void LateUpdate()
         {
             TriggerChangeHandlers();
 
@@ -1118,6 +1126,8 @@ namespace NUXML
         internal void QueueChangeHandler(string name)
         {
             _changeHandlers.Add(name);
+
+            // TODO optimize by caching this info in ViewTypeData
             if (!_changeHandlerMethods.ContainsKey(name))
             {
                 _changeHandlerMethods.Add(name, GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
@@ -1142,6 +1152,15 @@ namespace NUXML
         {
             QueueChangeHandler("LayoutChanged");
 
+            // inform parents of update
+            NotifyLayoutChanged();
+        }
+
+        /// <summary>
+        /// Notifies the parents that the layout of this view has changed.
+        /// </summary>
+        public void NotifyLayoutChanged()
+        {
             // inform parents of update
             this.ForEachParent<View>(x => x.QueueChangeHandler("ChildLayoutChanged"));
         }
@@ -1192,6 +1211,8 @@ namespace NUXML
             {
                 Deactivated.Trigger();
             }
+
+            NotifyLayoutChanged();
         }
 
         /// <summary>
@@ -1339,10 +1360,21 @@ namespace NUXML
         /// <summary>
         /// Creates a view from a template and adds it to a parent at specified index.
         /// </summary>
-        public static T CreateView<T>(T template, View layoutParent, int siblingIndex = -1) where T : View
+        public static T CreateView<T>(T template, View layoutParent, int siblingIndex = -1, ViewPool viewPool = null) where T : View
         {
-            // instantiate template
-            var go = Instantiate(template.gameObject) as GameObject;            
+            GameObject go = null;
+
+            // if pool isn't empty get an item from the pool
+            if (viewPool != null && !viewPool.IsEmpty)
+            {
+                go = viewPool.GetView().gameObject;
+            }
+            else
+            {
+                // instantiate template
+                go = Instantiate(template.gameObject) as GameObject;
+            }
+
             go.hideFlags = UnityEngine.HideFlags.None;
 
             // set layout parent
@@ -1357,15 +1389,48 @@ namespace NUXML
 
             view.IsTemplate.DirectValue = false;
             view.IsDynamic.DirectValue = true;
+            //view.LayoutParent = layoutParent;
             return view;
         }
 
         /// <summary>
         /// Creates a child view from a template.
         /// </summary>
-        public T CreateView<T>(T template, int siblingIndex = -1) where T : View
+        public T CreateView<T>(T template, int siblingIndex = -1, ViewPool viewPool = null) where T : View
         {
-            return CreateView(template, this, siblingIndex);
+            return CreateView(template, this, siblingIndex, viewPool);
+        }
+
+        /// <summary>
+        /// Creates a pool of ready to be used views that can be drawn from when a new view is needed rather than creating them on-demand. Used to improve performance.
+        /// </summary>
+        public ViewPool GetViewPool(string name, View template, int poolSize, int maxPoolSize)
+        {
+            // does a view pool container exist for this template?
+            var viewPoolContainer = this.Find<ViewPoolContainer>(x => x.Id == name && x.Template == template, false);
+            if (viewPoolContainer == null)
+            {
+                // no. create a new one 
+                viewPoolContainer = CreateView<ViewPoolContainer>();
+                viewPoolContainer.Id = name;
+                viewPoolContainer.PoolSize.DirectValue = poolSize;
+                viewPoolContainer.MaxPoolSize.DirectValue = maxPoolSize;
+                viewPoolContainer.IsActive.DirectValue = false;
+                viewPoolContainer.Template = template;
+                viewPoolContainer.HideFlags.Value = UnityEngine.HideFlags.HideInHierarchy;
+                // viewPoolContainer.HideFlags.Value = UnityEngine.HideFlags.HideAndDontSave; // TODO enable to only create during runtime
+                viewPoolContainer.InitializeViews();                                
+            }            
+            else
+            {
+                // yes. just update pool size
+                viewPoolContainer.PoolSize.Value = poolSize;
+                viewPoolContainer.MaxPoolSize.Value = maxPoolSize;
+                viewPoolContainer.Template = template;
+                viewPoolContainer.UpdateViewPool();
+            }
+        
+            return new ViewPool(viewPoolContainer);
         }
 
         /// <summary>
@@ -1395,7 +1460,7 @@ namespace NUXML
         /// <summary>
         /// Moves the view to another view.
         /// </summary>
-        public void MoveTo(View target, int childIndex = -1)
+        public void MoveTo(View target, int childIndex = -1, bool updateLayoutParent = true)
         {
             transform.SetParent(target.transform, false);
             if (childIndex >= 0)
@@ -1403,11 +1468,14 @@ namespace NUXML
                 transform.SetSiblingIndex(childIndex);
             }
 
-            SetValue(() => LayoutParent, target);
+            if (updateLayoutParent)
+            {
+                SetValue(() => LayoutParent, target);
+            }
         }
 
         /// <summary>
-        /// Initializes this view and all children. Used if the view is created dynamically and need to be called once to propertly initialize the view.
+        /// Initializes this view and all children. Used if the view is created dynamically and need to be called once to properly initialize the view.
         /// </summary>
         public void InitializeViews()
         {
@@ -1560,9 +1628,17 @@ namespace NUXML
         /// <summary>
         /// Returns string based on format string and parameters.
         /// </summary>
-        public static string Format(string format, params object[] args)
+        public static string Format(string format, object arg)
         {
-            return String.Format(format, args);
+            return String.Format(format, arg ?? String.Empty);
+        }
+
+        /// <summary>
+        /// Returns string based on format string and parameters.
+        /// </summary>
+        public static string Format1(string format, object arg)
+        {
+            return String.Format(format, arg ?? String.Empty);
         }
 
         /// <summary>
@@ -1570,7 +1646,7 @@ namespace NUXML
         /// </summary>
         public static string Format2(string format, object arg1, object arg2)
         {
-            return String.Format(format, arg1, arg2);
+            return String.Format(format, arg1 ?? String.Empty, arg2 ?? String.Empty);
         }
 
         /// <summary>
@@ -1578,7 +1654,56 @@ namespace NUXML
         /// </summary>
         public static string Format3(string format, object arg1, object arg2, object arg3)
         {
-            return String.Format(format, arg1, arg2, arg3);
+            return String.Format(format, arg1 ?? String.Empty, arg2 ?? String.Empty, arg3 ?? String.Empty);
+        }
+
+        /// <summary>
+        /// Gets child view enumerator.
+        /// </summary>
+        public IEnumerator<View> GetEnumerator()
+        {
+            foreach (Transform child in gameObject.transform)
+            {
+                var childView = child.GetComponent<View>();
+                if (childView == null)
+                {
+                    continue;
+                }
+
+                yield return childView;
+            }
+        }
+
+        /// <summary>
+        /// Gets child view enumerator.
+        /// </summary>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        /// <summary>
+        /// Destroys the view and moves its content to a new parent.
+        /// </summary>
+        public void DestroyAndMoveContent(View newParent)
+        {
+            // move content
+            MoveContent(newParent);
+
+            // destroy
+            this.Destroy();
+        }
+
+        /// <summary>
+        /// Moves the view's content to a new parent.
+        /// </summary>
+        public void MoveContent(View newParent)
+        {
+            var children = Content.GetChildren<View>(false);
+            foreach (var child in children)
+            {
+                child.MoveTo(newParent);
+            }
         }
 
         #endregion
@@ -1649,6 +1774,37 @@ namespace NUXML
             get
             {
                 return _viewFieldData;
+            }
+        }
+
+        /// <summary>
+        /// Gets view type data.
+        /// </summary>
+        public ViewTypeData ViewTypeData
+        {
+            get
+            {
+                if (_viewTypeData == null)
+                {
+                    _viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+                }
+
+                return _viewTypeData;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets bool indicating if the view has been initialized.
+        /// </summary>
+        public bool IsInitialized
+        {
+            get
+            {
+                return _isInitialized;
+            }
+            set
+            {
+                _isInitialized = value;
             }
         }
 

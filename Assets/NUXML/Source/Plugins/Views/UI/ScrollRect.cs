@@ -55,7 +55,7 @@ namespace NUXML.Views.UI
         /// Horizontal normalized position.
         /// </summary>
         /// <d>Value between 0-1 indicating the position of the scrollable content.</d>
-        [MapTo("ScrollRectComponent.horizontalNormalizedPosition")]
+        [ChangeHandler("NormalizedPositionChanged", TriggerImmediately = true)]
         public _float HorizontalNormalizedPosition;
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace NUXML.Views.UI
         /// Normalized position of the scroll.
         /// </summary>
         /// <d>The scroll position as a Vector2 between (0,0) and (1,1) with (0,0) being the lower left corner.</d>
-        [MapTo("ScrollRectComponent.normalizedPosition")]
+        [ChangeHandler("NormalizedPositionChanged", TriggerImmediately = true)]
         public _Vector2 NormalizedPosition;
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace NUXML.Views.UI
         /// Vertical normalized position.
         /// </summary>
         /// <d>Value between 0-1 indicating the position of the scrollable content.</d>
-        [MapTo("ScrollRectComponent.verticalNormalizedPosition")]
+        [ChangeHandler("NormalizedPositionChanged", TriggerImmediately = true)]
         public _float VerticalNormalizedPosition;
 
         /// <summary>
@@ -167,6 +167,20 @@ namespace NUXML.Views.UI
         public _RectTransformComponent Viewport;
 
         /// <summary>
+        /// Scrollable content alignment.
+        /// </summary>
+        /// <d>Scrollable content alignment. Also controls the initial position of the scrollbars.</d>
+        [ChangeHandler("LayoutChanged")]
+        public _ElementAlignment ContentAlignment;
+
+        /// <summary>
+        /// Indicates if normalized position should be updated from NormalizedPosition field.
+        /// </summary>
+        /// <d>When NormalizedPosition is changed from the outside UpdateNormalizedPosition is set to true so that the scroll rect updates from the field instead of the other way around.</d>
+        [ChangeHandler("NormalizedPositionChanged", TriggerImmediately = true)]
+        public _bool UpdateNormalizedPosition;
+
+        /// <summary>
         /// ScrollRect component.
         /// </summary>
         /// <d>Component responsible for handling scrollable content.</d>
@@ -195,8 +209,9 @@ namespace NUXML.Views.UI
         /// </summary>
         /// <d>Triggered as the user initiates a potential drag over the slider.</d>
         public ViewAction InitializePotentialDrag;
-        
+
         private bool _hasDisabledInteraction;
+        private int _updateNormalizedPositionCount;
 
         #endregion
 
@@ -228,101 +243,179 @@ namespace NUXML.Views.UI
         /// Called when the layout of the view has been changed.
         /// </summary>
         public override void LayoutChanged()
-        {            
+        {
+            var child = this.Find<UIView>(false);
+            if (child == null)
+                return;
+
+            // set scrollrect content to first child
             if (ScrollRectComponent.content == null)
             {
-                // set scrollrect content to first child
-                var child = this.Find<UIView>(false);
-                if (child != null)
-                {
-                    ScrollRectComponent.content = child.RectTransform;
-                }
+                ScrollRectComponent.content = child.RectTransform;
+            }
+
+            if (ContentAlignment.IsSet)
+            {
+                child.Alignment.DirectValue = ContentAlignment.Value;
+                child.Pivot.DirectValue = ContentAlignment.Value.ToPivot();
             }
 
             // workaround for panel blocking drag events in child views
             UnblockDragEvents();
-
             base.LayoutChanged();
+        }
+
+        /// <summary>
+        /// Called each frame and updates the scroll rect.
+        /// </summary>
+        public virtual void Update()
+        {
+            // keep track of current normalized position
+            if (!UpdateNormalizedPosition)
+            {
+                // set normalized position
+                NormalizedPosition.DirectValue = ScrollRectComponent.normalizedPosition;
+                HorizontalNormalizedPosition.DirectValue = ScrollRectComponent.normalizedPosition.x;
+                VerticalNormalizedPosition.DirectValue = ScrollRectComponent.normalizedPosition.y;
+                return;
+            }
+
+            // we get here if we want to change the normalized position from outside           
+            if (ScrollRectComponent.normalizedPosition != NormalizedPosition.Value)
+            {
+                ScrollRectComponent.normalizedPosition = NormalizedPosition.Value;
+            }
+
+            // workaround for issue where scroll rect resets its normalized position when the content
+            // updates its rect transform, keep updating for a few frames to restore reset position
+            ++_updateNormalizedPositionCount;
+            if (_updateNormalizedPositionCount > 3)
+            {                
+                UpdateNormalizedPosition.DirectValue = false;
+            }            
+        }
+
+        /// <summary>
+        /// Called when the normalized position of the scroll rect has changed.
+        /// </summary>
+        public void NormalizedPositionChanged()
+        {
+            Vector2 normalizedPosition = Vector2.zero;
+            if (NormalizedPosition.IsSet)
+            {
+                normalizedPosition = NormalizedPosition.Value;
+                UpdateNormalizedPosition.DirectValue = true;
+            }
+
+            if (HorizontalNormalizedPosition.IsSet || VerticalNormalizedPosition.IsSet)
+            {
+                if (HorizontalNormalizedPosition.IsSet)
+                {
+                    normalizedPosition.x = HorizontalNormalizedPosition.Value;
+                }
+
+                if (VerticalNormalizedPosition.IsSet)
+                {
+                    normalizedPosition.y = VerticalNormalizedPosition.Value;
+                }
+
+                NormalizedPosition.DirectValue = normalizedPosition;
+                UpdateNormalizedPosition.DirectValue = true;
+            }
+
+            if (UpdateNormalizedPosition)
+            {
+                ScrollRectComponent.normalizedPosition = NormalizedPosition.Value;
+                _updateNormalizedPositionCount = 0;
+            }
         }
 
         /// <summary>
         /// Workaround for draggable child views blocking drag events.
         /// </summary>
-        private void UnblockDragEvents()
+        public void UnblockDragEvents()
         {
             this.ForEachChild<View>(x =>
             {
-                var eventTrigger = x.GetComponent<EventTrigger>();
+                UnblockDragEvents(x);
+            });
+        }
 
-                if (eventTrigger == null)
-                    return;
+        /// <summary>
+        /// Unblocks drag events on view.
+        /// </summary>
+        public void UnblockDragEvents(View view)
+        {
+            var eventTrigger = view.GetComponent<EventTrigger>();
+
+            if (eventTrigger == null)
+                return;
 
 #if UNITY_4_6 || UNITY_5_0
-                var triggers = eventTrigger.delegates;
+            var triggers = eventTrigger.delegates;
 #else
-                var triggers = eventTrigger.triggers;
-#endif      
+            var triggers = eventTrigger.triggers;
+#endif
 
-                if (triggers == null)
-                    return;
+            if (triggers == null)
+                return;
 
-                // check if view has drag event entries
-                bool hasDragEntries = false;
-                foreach (var entry in triggers)
+            // check if view has drag event entries
+            bool hasDragEntries = false;
+            foreach (var entry in triggers)
+            {
+                if (entry.eventID == EventTriggerType.BeginDrag ||
+                    entry.eventID == EventTriggerType.EndDrag ||
+                    entry.eventID == EventTriggerType.Drag ||
+                    entry.eventID == EventTriggerType.InitializePotentialDrag)
                 {
-                    if (entry.eventID == EventTriggerType.BeginDrag ||
-                        entry.eventID == EventTriggerType.EndDrag ||
-                        entry.eventID == EventTriggerType.Drag ||
-                        entry.eventID == EventTriggerType.InitializePotentialDrag)
-                    {
-                        hasDragEntries = true;
-                    }
+                    hasDragEntries = true;
                 }
+            }
 
-                // unblock drag events if the view doesn't handle drag events
-                if (!hasDragEntries)
+            // unblock drag events if the view doesn't handle drag events
+            if (!hasDragEntries)
+            {
+                // unblock initialize potential drag 
+                var initializePotentialDragEntry = new EventTrigger.Entry();
+                initializePotentialDragEntry.eventID = EventTriggerType.InitializePotentialDrag;
+                initializePotentialDragEntry.callback = new EventTrigger.TriggerEvent();
+                initializePotentialDragEntry.callback.AddListener(eventData =>
                 {
-                    // unblock initialize potential drag 
-                    var initializePotentialDragEntry = new EventTrigger.Entry();
-                    initializePotentialDragEntry.eventID = EventTriggerType.InitializePotentialDrag;
-                    initializePotentialDragEntry.callback = new EventTrigger.TriggerEvent();
-                    initializePotentialDragEntry.callback.AddListener(eventData =>
-                    {
-                        SendMessage("OnInitializePotentialDrag", eventData);
-                    });
-                    triggers.Add(initializePotentialDragEntry);
+                    SendMessage("OnInitializePotentialDrag", eventData);
+                });
+                triggers.Add(initializePotentialDragEntry);
 
-                    // unblock begin drag
-                    var beginDragEntry = new EventTrigger.Entry();
-                    beginDragEntry.eventID = EventTriggerType.BeginDrag;
-                    beginDragEntry.callback = new EventTrigger.TriggerEvent();
-                    beginDragEntry.callback.AddListener(eventData =>
-                    {
-                        SendMessage("OnBeginDrag", eventData);
-                    });
-                    triggers.Add(beginDragEntry);
+                // unblock begin drag
+                var beginDragEntry = new EventTrigger.Entry();
+                beginDragEntry.eventID = EventTriggerType.BeginDrag;
+                beginDragEntry.callback = new EventTrigger.TriggerEvent();
+                beginDragEntry.callback.AddListener(eventData =>
+                {
+                    SendMessage("OnBeginDrag", eventData);
+                });
+                triggers.Add(beginDragEntry);
 
-                    // drag
-                    var dragEntry = new EventTrigger.Entry();
-                    dragEntry.eventID = EventTriggerType.Drag;
-                    dragEntry.callback = new EventTrigger.TriggerEvent();
-                    dragEntry.callback.AddListener(eventData =>
-                    {
-                        SendMessage("OnDrag", eventData);
-                    });
-                    triggers.Add(dragEntry);
+                // drag
+                var dragEntry = new EventTrigger.Entry();
+                dragEntry.eventID = EventTriggerType.Drag;
+                dragEntry.callback = new EventTrigger.TriggerEvent();
+                dragEntry.callback.AddListener(eventData =>
+                {
+                    SendMessage("OnDrag", eventData);
+                });
+                triggers.Add(dragEntry);
 
-                    // end drag
-                    var endDragEntry = new EventTrigger.Entry();
-                    endDragEntry.eventID = EventTriggerType.EndDrag;
-                    endDragEntry.callback = new EventTrigger.TriggerEvent();
-                    endDragEntry.callback.AddListener(eventData =>
-                    {
-                        SendMessage("OnEndDrag", eventData);
-                    });
-                    triggers.Add(endDragEntry);
-                }
-            });
+                // end drag
+                var endDragEntry = new EventTrigger.Entry();
+                endDragEntry.eventID = EventTriggerType.EndDrag;
+                endDragEntry.callback = new EventTrigger.TriggerEvent();
+                endDragEntry.callback.AddListener(eventData =>
+                {
+                    SendMessage("OnEndDrag", eventData);
+                });
+                triggers.Add(endDragEntry);
+            }
         }
 
         /// <summary>
@@ -346,6 +439,7 @@ namespace NUXML.Views.UI
         /// </summary>
         public void ScrollRectDrag(PointerEventData eventData)
         {
+            UpdateNormalizedPosition.DirectValue = false;
             if (!DisableInteractionScrollDelta.IsSet || _hasDisabledInteraction)
                 return;
 

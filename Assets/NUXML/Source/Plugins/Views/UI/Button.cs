@@ -267,7 +267,7 @@ namespace NUXML.Views.UI
             }
             else
             {
-                SetState(IsToggleButton && ToggleValue ? "Pressed" : "Default");
+                SetState(IsToggleButton && ToggleValue ? "Pressed" : DefaultStateName);
 
                 // enable button actions
                 Click.IsDisabled = false;
@@ -383,6 +383,18 @@ namespace NUXML.Views.UI
         {
             base.SetState(state);
             ButtonLabel.SetState(state);
+        }
+
+        /// <summary>
+        /// Called when the button is disabled.
+        /// </summary>
+        public void OnDisable()
+        {
+            if (!IsToggleButton && !IsDisabled)
+            {
+                // reset state to default if view is deactivated
+                SetState(DefaultStateName);
+            }
         }
 
         #endregion

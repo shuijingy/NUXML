@@ -158,41 +158,15 @@ namespace NUXML
                 // as long as there are change handlers queued, go through all views and trigger them
                 rootView.ForThisAndEachChild<View>(x => x.TryTriggerChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
                 ++pass;
-            }            
+            }
+
+            // uncomment to log initialization performance
+            //sw.Stop();
+            //if (rootView.gameObject == RootView)
+            //{
+            //    Utils.Log("Initialization time: {0}", sw.ElapsedMilliseconds);
+            //}
         }
-
-		public void InitializeNGUIViews(GameObject rootView)
-		{
-			if (rootView == null)
-			{
-				return;                
-			}
-
-			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitializeInternalDefaultValues());
-			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitializeInternal());
-			rootView.ForThisAndEachChild<NGUIView>(x => x.TryInitialize(),             true, null, TraversalAlgorithm.ReverseBreadthFirst);
-			rootView.ForThisAndEachChild<NGUIView>(x => x.TryPropagateBindings(),      true, null, TraversalAlgorithm.BreadthFirst);
-			rootView.ForThisAndEachChild<NGUIView>(x => x.TryQueueAllChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
-
-			// notify dictionary observers
-			ResourceDictionary.NotifyObservers();
-
-			// trigger change handlers
-			int pass = 0;
-			while (rootView.Find<NGUIView>(x => x.HasQueuedChangeHandlers))
-			{
-				if (pass >= 1000)
-				{
-					PrintTriggeredChangeHandlerOverflowError(pass, rootView);
-					break;
-				}
-
-				// as long as there are change handlers queued, go through all views and trigger them
-				rootView.ForThisAndEachChild<NGUIView>(x => x.TryTriggerChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
-				++pass;
-			}            
-		}
-
 
         /// <summary>
         /// Prints triggered change handler overflow error message.
@@ -212,7 +186,7 @@ namespace NUXML
                 }
             }
 
-            Debug.LogError(String.Format("[NUXML] Error initializing views. Stack overflow when triggering change handlers. Make sure your change handlers doesn't trigger each other in a loop. The following change handlers were still triggered after {0} passes:{1}{2}", pass, Environment.NewLine, sb.ToString()));
+            Utils.LogError("[NUXML] Error initializing views. Stack overflow when triggering change handlers. Make sure your change handlers doesn't trigger each other in a loop. The following change handlers were still triggered after {0} passes:{1}{2}", pass, Environment.NewLine, sb.ToString());
         }
 
         /// <summary>
@@ -257,7 +231,7 @@ namespace NUXML
             ViewTypeData viewTypeData;
             if (!_viewTypeDataDictionary.TryGetValue(viewTypeName, out viewTypeData))
             {
-                Debug.LogError(String.Format("[NUXML] Can't find view type \"{0}\".", viewTypeName));
+                Utils.LogError("[NUXML] Can't find view type \"{0}\".", viewTypeName);
                 return null;
             }
 

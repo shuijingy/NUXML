@@ -212,15 +212,16 @@ namespace NUXML
 		public static string DefaultStateName = "Default";
 		public static string AnyStateName     = "Any";
 
+        private ViewTypeData _viewTypeData;
 		private Dictionary<string, NGUIViewFieldData> _viewFieldData;
 		private Dictionary<string, Dictionary<string, ViewFieldStateValue>> _stateValues;
-		private Dictionary<string, Dictionary<string, StateAnimation>> _stateAnimations;
+		private Dictionary<string, Dictionary<string, StateAnimation>>      _stateAnimations;
 		private HashSet<string>                _setViewFields;
-		private List<ValueObserver>            _valueObservers;
+		private List<NGUIValueObserver>        _valueObservers;
 		private HashSet<string>                _changeHandlers;
 		private Dictionary<string, MethodInfo> _changeHandlerMethods;
 		private Dictionary<string, string>     _expressionViewField;
-		private List<ViewAction>               _eventSystemViewActions;
+		private List<NGUIViewAction>           _eventSystemViewActions;
 		private bool   _isDefaultState;
         private bool   _isInitialized;
 		private string _previousState;
@@ -250,11 +251,11 @@ namespace NUXML
 			_stateValues     = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
 			_stateAnimations = new Dictionary<string, Dictionary<string, StateAnimation>>();
 			_setViewFields   = new HashSet<string>();
-			_valueObservers  = new List<ValueObserver>();
+			_valueObservers  = new List<NGUIValueObserver>();
 			_changeHandlers  = new HashSet<string>();
 			_changeHandlerMethods   = new Dictionary<string, MethodInfo>();
 			_expressionViewField    = new Dictionary<string, string>();
-			_eventSystemViewActions = new List<ViewAction>();
+			_eventSystemViewActions = new List<NGUIViewAction>();
 		}
 
         #endregion
@@ -286,6 +287,7 @@ namespace NUXML
 							   bool notifyObservers)
 		{
 			callstack = callstack ?? new HashSet<NGUIViewFieldData>();
+            context = context ?? ValueConverterContext;
 
 			//Debug.Log(String.Format("{0}: {1} = {2}", GameObjectName, viewField, value));
 
@@ -297,19 +299,20 @@ namespace NUXML
 				return null;
 			}
 
-			// if default state set default state value
-			if (_isDefaultState && updateDefaultState)
-			{
-				var defaultStateValues = _stateValues.Get(DefaultStateName);
-				if (defaultStateValues != null)
-				{
-					// update default state value
-					if (defaultStateValues.ContainsKey(viewField))
-					{
-						defaultStateValues[viewField].SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
-					}
-				}
-			}
+            // if default state set default state value
+            if (_isDefaultState && updateDefaultState)
+            {
+                var defaultStateValues = _stateValues.Get(DefaultStateName);
+                if (defaultStateValues != null)
+                {
+                    // update default state value
+                    ViewFieldStateValue defaultStateValue;
+                    if (defaultStateValues.TryGetValue(viewField, out defaultStateValue))
+                    {
+                        defaultStateValue.SetValue(value, viewFieldData.ValueConverter.ConvertToString(value));
+                    }
+                }
+            }
 
 			// set view field value
 			try
@@ -323,21 +326,21 @@ namespace NUXML
 			}
 		}
 
-		/// <summary>
-		/// Sets the value of a field utilizing the binding and change tracking system.
-		/// </summary>
-		protected object SetValue<TField>(Expression<Func<TField>> expression, object value, bool updateDefaultState, ValueConverterContext context, bool notifyObservers)
-		{
-			return SetValue(GetMappedViewField(expression), value, updateDefaultState, null, context, notifyObservers);
-		}
+        /// <summary>
+        /// Sets the value of a field utilizing the binding and change tracking system.
+        /// </summary>
+        protected object SetValue<TField>(Expression<Func<TField>> expression, object value, bool updateDefaultState, ValueConverterContext context, bool notifyObservers)
+        {
+            return SetValue(GetMappedViewField(expression), value, updateDefaultState, null, context, notifyObservers);
+        }
 
-		/// <summary>
-		/// Sets the value of a field utilizing the binding and change tracking system.
-		/// </summary>
-		protected object SetValue<TField>(Expression<Func<TField>> expression, object value)
-		{
-			return SetValue(GetMappedViewField(expression), value, true, null, null, true);
-		}
+        /// <summary>
+        /// Sets the value of a field utilizing the binding and change tracking system.
+        /// </summary>
+        protected object SetValue<TField>(Expression<Func<TField>> expression, object value)
+        {
+            return SetValue(GetMappedViewField(expression), value, true, null, null, true);
+        }
 
 		/// <summary>
 		/// Sets view field is-set indicator. 
@@ -373,7 +376,7 @@ namespace NUXML
 			}
 
 			// create BindingValueObserver and add it as observer to source view fields
-			var bindingValueObserver = new BindingValueObserver();
+			var bindingValueObserver = new NGUIBindingValueObserver();
 			bindingValueObserver.TargetNGUI = viewFieldData;
 
 			// parse view field binding string
@@ -519,7 +522,7 @@ namespace NUXML
 						bindingValueObserver.BindingType = BindingType.SingleBinding;
 
 						// create value observer for target
-						var targetBindingValueObserver         = new BindingValueObserver();
+						var targetBindingValueObserver         = new NGUIBindingValueObserver();
 						targetBindingValueObserver.BindingType = BindingType.SingleBinding;
 						targetBindingValueObserver.TargetNGUI  = sourceViewFieldData;
 						targetBindingValueObserver.Sources.Add(new NGUIViewFieldBindingSource(viewFieldData, isNegatedField));
@@ -544,7 +547,7 @@ namespace NUXML
         /// <summary>
         /// Sets resource binding.
         /// </summary>
-        private void SetResourceBinding(BindingValueObserver bindingValueObserver, string sourceFieldName)
+        private void SetResourceBinding(NGUIBindingValueObserver bindingValueObserver, string sourceFieldName)
         {
             string dictionaryName = null;
             string resourceKey = sourceFieldName;
@@ -669,7 +672,7 @@ namespace NUXML
             }
 
 			// create change handler observer
-			var changeHandlerObserver = new ChangeHandlerValueObserver(this, changeHandler.ChangeHandlerName, changeHandler.TriggerImmediately);
+			var changeHandlerObserver = new NGUIChangeHandlerValueObserver(this, changeHandler.ChangeHandlerName, changeHandler.TriggerImmediately);
 			if (changeHandlerObserver.IsValid)
 			{
 				viewFieldData.RegisterValueObserver(changeHandlerObserver);
@@ -777,11 +780,11 @@ namespace NUXML
 			_stateValues     = new Dictionary<string, Dictionary<string, ViewFieldStateValue>>();
 			_stateAnimations = new Dictionary<string, Dictionary<string, StateAnimation>>();
 			_setViewFields   = new HashSet<string>();
-			_valueObservers  = new List<ValueObserver>();
+			_valueObservers  = new List<NGUIValueObserver>();
 			_changeHandlers  = new HashSet<string>();
 			_changeHandlerMethods   = new Dictionary<string, MethodInfo>();
 			_expressionViewField    = new Dictionary<string, string>();
-			_eventSystemViewActions = new List<ViewAction>();
+			_eventSystemViewActions = new List<NGUIViewAction>();
 			_previousState  = State;
 			_isDefaultState = State == DefaultStateName;
 		}
@@ -823,14 +826,14 @@ namespace NUXML
             }
 
             // initialize system event triggers
-            _eventSystemViewActions = new List<ViewAction>();
+            _eventSystemViewActions = new List<NGUIViewAction>();
             foreach (var viewActionField in viewTypeData.ViewActionFields)
             {
                 // get view action field data
                 var viewFieldData = GetViewFieldData(viewActionField);
 
                 bool hasValue;
-                ViewAction viewAction = viewFieldData.GetValue(out hasValue) as ViewAction;
+				NGUIViewAction viewAction = viewFieldData.GetValue(out hasValue) as NGUIViewAction;
                 if (viewAction != null && viewAction.TriggeredByEventSystem)
                 {
                     _eventSystemViewActions.Add(viewAction);
@@ -1007,7 +1010,7 @@ namespace NUXML
         /// <summary>
         /// Adds a value observer to the view.
         /// </summary>
-        internal void AddValueObserver(ValueObserver valueObserver)
+        internal void AddValueObserver(NGUIValueObserver valueObserver)
         {
             _valueObservers.Add(valueObserver);
         }
@@ -1173,7 +1176,7 @@ namespace NUXML
         public void NotifyLayoutChanged()
         {
             // inform parents of update
-            this.ForEachParent<View>(x => x.QueueChangeHandler("ChildLayoutChanged"));
+			this.ForEachParentNGUI<NGUIView>(x => x.QueueChangeHandler("ChildLayoutChanged"));
         }
 
         /// <summary>
@@ -1354,12 +1357,12 @@ namespace NUXML
 		/// <summary>
 		/// Creates a child view of specified type.
 		/// </summary>
-		public T CreateView<T>(int siblingIndex = -1, 
-								ValueConverterContext context = null, 
-								string themeName = "", 
-								string id = "", 
-								string style = "", 
-								IEnumerable<XElement> contentXuml = null) where T : NGUIView
+		public T CreateNGUIView<T>(int siblingIndex = -1, 
+								   ValueConverterContext context = null, 
+								   string themeName = "", 
+								   string id = "", 
+								   string style = "", 
+								   IEnumerable<XElement> contentXuml = null) where T : NGUIView
 		{
 			var view = NGUIViewData.CreateNGUIView<T>(this, this, context, themeName, Id, style);
 
@@ -1376,7 +1379,7 @@ namespace NUXML
 		/// <summary>
 		/// Creates a view from a template and adds it to a parent at specified index.
 		/// </summary>
-		public static T CreateView<T>(T template, NGUIView layoutParent, int siblingIndex = -1) where T : NGUIView
+		public static T CreateNGUIView<T>(T template, NGUIView layoutParent, int siblingIndex = -1) where T : NGUIView
 		{
 			// instantiate template
 			var go = Instantiate(template.gameObject) as GameObject;            
@@ -1400,41 +1403,41 @@ namespace NUXML
 		/// <summary>
 		/// Creates a child view from a template.
 		/// </summary>
-		public T CreateView<T>(T template, int siblingIndex = -1) where T : NGUIView
+		public T CreateNGUIView<T>(T template, int siblingIndex = -1) where T : NGUIView
 		{
-			return CreateView(template, this, siblingIndex);
+			return CreateNGUIView(template, this, siblingIndex);
 		}
 
         /// <summary>
         /// Creates a pool of ready to be used views that can be drawn from when a new view is needed rather than creating them on-demand. Used to improve performance.
         /// </summary>
-        public ViewPool GetViewPool(string name, View template, int poolSize, int maxPoolSize)
+        public NGUIViewPool GetNGUIViewPool(string name, NGUIView template, int poolSize, int maxPoolSize)
         {
             // does a view pool container exist for this template?
-            var viewPoolContainer = this.Find<ViewPoolContainer>(x => x.Id == name && x.Template == template, false);
+			var viewPoolContainer = this.FindNGUI<NGUIViewPoolContainer>(x => x.Id == name && x.Template == template, false);
             if (viewPoolContainer == null)
             {
                 // no. create a new one 
-                viewPoolContainer = CreateView<ViewPoolContainer>();
-                viewPoolContainer.Id = name;
-                viewPoolContainer.PoolSize.DirectValue = poolSize;
+				viewPoolContainer = CreateNGUIView<NGUIViewPoolContainer>();
+                viewPoolContainer.Id                      = name;
+                viewPoolContainer.PoolSize.DirectValue    = poolSize;
                 viewPoolContainer.MaxPoolSize.DirectValue = maxPoolSize;
-                viewPoolContainer.IsActive.DirectValue = false;
-                viewPoolContainer.Template = template;
-                viewPoolContainer.HideFlags.Value = UnityEngine.HideFlags.HideInHierarchy;
+                viewPoolContainer.IsActive.DirectValue    = false;
+                viewPoolContainer.Template                = template;
+                viewPoolContainer.HideFlags.Value         = UnityEngine.HideFlags.HideInHierarchy;
                 // viewPoolContainer.HideFlags.Value = UnityEngine.HideFlags.HideAndDontSave; // TODO enable to only create during runtime
-                viewPoolContainer.InitializeViews();                                
+				viewPoolContainer.InitializeNGUIViews();                                
             }            
             else
             {
                 // yes. just update pool size
-                viewPoolContainer.PoolSize.Value = poolSize;
-                viewPoolContainer.MaxPoolSize.Value = maxPoolSize;
-                viewPoolContainer.Template = template;
+                viewPoolContainer.PoolSize.Value     = poolSize;
+                viewPoolContainer.MaxPoolSize.Value  = maxPoolSize;
+                viewPoolContainer.Template           = template;
                 viewPoolContainer.UpdateViewPool();
             }
         
-            return new ViewPool(viewPoolContainer);
+			return new NGUIViewPool(viewPoolContainer);
         }
 
         /// <summary>
@@ -1464,7 +1467,7 @@ namespace NUXML
         /// <summary>
         /// Moves the view to another view.
         /// </summary>
-        public void MoveTo(View target, int childIndex = -1, bool updateLayoutParent = true)
+        public void MoveTo(NGUIView target, int childIndex = -1, bool updateLayoutParent = true)
         {
             transform.SetParent(target.transform, false);
             if (childIndex >= 0)
@@ -1481,9 +1484,9 @@ namespace NUXML
 		/// <summary>
 		/// Initializes this view and all children. Used if the view is created dynamically and need to be called once to propertly initialize the view.
 		/// </summary>
-		public void InitializeViews()
+		public void InitializeNGUIViews()
 		{
-			ViewPresenter.Instance.InitializeNGUIViews(this);
+			NGUIViewPresenter.Instance.InitializeNGUIViews(gameObject);
 		}
 
 		/// <summary>
@@ -1695,7 +1698,7 @@ namespace NUXML
             MoveContent(newParent);
 
             // destroy
-            this.Destroy();
+			this.DestroyNGUI();
         }
 
         /// <summary>
@@ -1703,7 +1706,7 @@ namespace NUXML
         /// </summary>
 		public void MoveContent(NGUIView newParent)
         {
-			var children = Content.GetChildren<NGUIView>(false);
+			var children = Content.GetChildrenNGUI<NGUIView>(false);
             foreach (var child in children)
             {
                 child.MoveTo(newParent);
@@ -1790,7 +1793,7 @@ namespace NUXML
             {
                 if (_viewTypeData == null)
                 {
-                    _viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+                    _viewTypeData = NGUIViewData.GetViewTypeData(ViewTypeName);
                 }
 
                 return _viewTypeData;

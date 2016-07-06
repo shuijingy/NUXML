@@ -14,11 +14,11 @@ namespace NUXML
     {
         #region Fields
 
-        public View   ParentView;
-        public string ViewFieldPath;
-        public bool   IsMapped;
-        public bool   _isSet;
-        public event  EventHandler ValueSet;
+        public View     ParentView;
+        public string   ViewFieldPath;
+        public bool     IsMapped;
+        public bool     _isSet;
+        public event    EventHandler ValueSet;
 
         #endregion
 

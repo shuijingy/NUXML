@@ -33,7 +33,7 @@ namespace NUXML
 		public bool   SevereParseError;
 		public bool   PropagateFirst;
 
-		private HashSet<ValueObserver> _valueObservers;
+		private HashSet<NGUIValueObserver> _valueObservers;
 		private bool _isSet;
 		private bool _isSetInitialized;
 
@@ -173,11 +173,11 @@ namespace NUXML
 		/// <summary>
 		/// Registers a value observer.
 		/// </summary>
-		public void RegisterValueObserver(ValueObserver valueObserver)
+		public void RegisterValueObserver(NGUIValueObserver valueObserver)
 		{
 			if (_valueObservers == null)
 			{
-				_valueObservers = new HashSet<ValueObserver>();
+				_valueObservers = new HashSet<NGUIValueObserver>();
 			}
 
 			_valueObservers.Add(valueObserver);
@@ -211,7 +211,7 @@ namespace NUXML
 
 			foreach (var valueObserver in _valueObservers)
 			{
-				if (valueObserver is BindingValueObserver)
+				if (valueObserver is NGUIBindingValueObserver)
 				{
 					valueObserver.Notify(callstack);
 				}
@@ -230,7 +230,7 @@ namespace NUXML
 
 			foreach (var valueObserver in _valueObservers)
 			{
-				if (valueObserver is ChangeHandlerValueObserver)
+				if (valueObserver is NGUIChangeHandlerValueObserver)
 				{
 					valueObserver.Notify(callstack);
 				}
@@ -293,7 +293,7 @@ namespace NUXML
 				if (fieldInfo == null && propertyInfo == null)
 				{
 					// no. check if it refers to a view in the hierarchy
-					var result = fieldData.TargetNGUIView.Find<NGUIView>(x => x.Id == viewFields[0], true, fieldData.TargetNGUIView);
+					var result = fieldData.TargetNGUIView.FindNGUI<NGUIView>(x => x.Id == viewFields[0], true, fieldData.TargetNGUIView);
 					if (result == null)
 					{
 						// no. assume that it refers to this view (in cases like x.SetValue(() => x.Field, value))

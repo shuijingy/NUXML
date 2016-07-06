@@ -30,9 +30,9 @@ namespace NUXML
         private XElement _xumlElement;
                 
         private static bool _forceUpdateAllObservers;
-        private static Dictionary<string, List<Resource>> _resourceLookupDictionary;
+        private static Dictionary<string, List<Resource>>      _resourceLookupDictionary;
         private static Dictionary<string, List<WeakReference>> _resourceBindingObservers;
-        private static HashSet<WeakReference> _observersToBeNotified;
+        private static HashSet<WeakReference>                  _observersToBeNotified;
 
         #endregion
 
@@ -240,6 +240,22 @@ namespace NUXML
             _resourceBindingObservers[fullResourceKey].Add(new WeakReference(bindingValueObserver));
             _observersToBeNotified.Add(observerRef);            
         }
+
+		/// <summary>
+		/// Registers a resource binding observer. 
+		/// </summary>
+		public static void RegisterResourceBindingObserver(string dictionaryName, string resourceKey, NGUIBindingValueObserver nguiBindingValueObserver)
+		{
+			var fullResourceKey = GetFullResourceKey(dictionaryName, resourceKey);
+			if (!_resourceBindingObservers.ContainsKey(fullResourceKey))
+			{
+				_resourceBindingObservers.Add(fullResourceKey, new List<WeakReference>());
+			}
+
+			var observerRef = new WeakReference(nguiBindingValueObserver);
+			_resourceBindingObservers[fullResourceKey].Add(new WeakReference(nguiBindingValueObserver));
+			_observersToBeNotified.Add(observerRef);            
+		}
 
         /// <summary>
         /// Adds resource to the compile-time dictionary. Called when resources are loaded from XUML.

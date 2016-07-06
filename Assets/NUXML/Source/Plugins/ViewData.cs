@@ -113,8 +113,7 @@ namespace NUXML
             }
 
             // generate views
-            //GenerateViews();
-			GenerateNGUIViews();
+            GenerateViews();
         }
 
         /// <summary>
@@ -197,17 +196,17 @@ namespace NUXML
 
             // set view action fields
             var viewActionType = typeof(ViewAction);
-            var actionFields   = type.GetFields().Where(x => x.FieldType == viewActionType).Select(y => y.Name);
+            var actionFields = type.GetFields().Where(x => x.FieldType == viewActionType).Select(y => y.Name);
             viewTypeData.ViewActionFields.AddRange(actionFields);
 
             // set dependency fields
             var viewFieldBaseType = typeof(ViewFieldBase);
-            var dependencyFields  = type.GetFields().Where(x => viewFieldBaseType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
+            var dependencyFields = type.GetFields().Where(x => viewFieldBaseType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
             viewTypeData.DependencyFields.AddRange(dependencyFields);
 
             // set component fields
             var componentType = typeof(Component);
-            var baseViewType  = typeof(View);
+            var baseViewType = typeof(View);
             var componentFields = type.GetFields().Where(x => componentType.IsAssignableFrom(x.FieldType) &&
                 !baseViewType.IsAssignableFrom(x.FieldType)).Select(y => y.Name);
             viewTypeData.ComponentFields.AddRange(componentFields);
@@ -496,231 +495,14 @@ namespace NUXML
             return resources;
         }
 
-		/// <summary>
-		/// Creates view of specified type.
-		/// </summary>
-		public static T CreateNGUIView<T>(View layoutParent, View parent, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
-		{
-			Type viewType = typeof(T);
-			return CreateNGUIView(viewType.Name, layoutParent, parent, context, themeName, id, style, contentXuml) as T;
-		}
-
-		/// <summary>
-		/// Creates the NGUI view.
-		/// </summary>
-		/// <returns>The NGUI view.</returns>
-		/// <param name="viewName">View name.</param>
-		/// <param name="layoutParent">Layout parent.</param>
-		/// <param name="parent">Parent.</param>
-		/// <param name="context">Context.</param>
-		/// <param name="theme">Theme.</param>
-		/// <param name="id">Identifier.</param>
-		/// <param name="style">Style.</param>
-		/// <param name="contentXuml">Content xuml.</param>
-		public static View CreateNGUIView(string viewName, 
-										  View   layoutParent, 
-			                              View   parent, 
-			                              ValueConverterContext context = null, 
-			                              string theme = "", 
-			                              string id    = "",  
-			                              string style = "", 
-			                              IEnumerable<XElement> contentXuml = null)
-		{
-			// Creates the views in the following order:
-			// CreateView(view)
-			//   Foreach child
-			//     CreateView(child)
-			//     SetViewValues(child)
-			//   Foreach contentView
-			//      CreateView(contentView)
-			//      SetViewValues(contentView)
-			//   SetViewValues(view)       
-			//   SetThemeValues(view)     
-
-			if (String.IsNullOrEmpty(theme))
-			{
-				theme = ViewPresenter.Instance.DefaultTheme;
-			}
-
-			// initialize value converter context
-			if (context == null)
-			{
-				context = ValueConverterContext.Default;
-			}
-
-			// create view from XUML
-			var viewTypeData = GetViewTypeData(viewName);
-			if (viewTypeData == null)
-			{
-				return null;
-			}
-			Debug.Log("->> viewTypeData: " + viewTypeData.ViewName);
-
-			// get view type
-			var viewType = GetViewType(viewName);
-			if (viewType == null)
-			{
-				viewType = typeof(View);
-			}
-
-			Debug.Log("->> viewType: " + viewType.ToString());
-
-			// create view game object with required components
-			var go = new GameObject(viewTypeData.ViewName);
-			if (typeof(UIView).IsAssignableFrom(viewType))
-			{
-				go.AddComponent<RectTransform>();
-			}
-			go.transform.SetParent(layoutParent.transform, false);
-
-			// create view behavior and initialize it
-			var view = go.AddComponent(viewType) as View;
-			view.LayoutParent = layoutParent;
-			view.Parent       = parent;
-			view.Id           = id;
-			view.Style        = style;
-			view.Theme        = theme;
-			view.Content      = view;
-			view.ViewXumlName = viewName;
-
-			// set component fields
-			foreach (var componentField in viewTypeData.ComponentFields)
-			{
-				Debug.Log("->> componentField: " + componentField);
-
-				if (viewTypeData.ExcludedComponentFields.Contains(componentField))
-					continue; // exclude component
-
-				var componentFieldInfo = viewType.GetField(componentField);
-				Component component = null;
-				if (componentField == "Transform")
-				{
-					component = go.transform;
-				}
-				else
-				{
-					component = go.AddComponent(componentFieldInfo.FieldType);
-				}
-				componentFieldInfo.SetValue(view, component);
-			}
-
-			// set view action fields
-			foreach (var viewActionField in viewTypeData.ViewActionFields)
-			{
-				Debug.Log("->> componentField: " + viewActionField);	
-				var viewActionFieldInfo = viewType.GetField(viewActionField);
-				viewActionFieldInfo.SetValue(view, new ViewAction(viewActionField));
-			}
-
-			// set dependency fields            
-			foreach (var dependencyField in viewTypeData.DependencyFields)
-			{
-				Debug.Log("->> dependencyField: " + dependencyField);		
-				var dependencyFieldInfo = viewType.GetField(dependencyField);
-				var dependencyFieldInstance = TypeHelper.CreateInstance(dependencyFieldInfo.FieldType) as ViewFieldBase;
-				dependencyFieldInfo.SetValue(view, dependencyFieldInstance);
-				dependencyFieldInstance.ParentView = view;
-				dependencyFieldInstance.ViewFieldPath = dependencyField;
-			}
-
-			// parse child XUML and for each child create views and set their values
-			foreach (var childElement in viewTypeData.XumlElement.Elements())
-			{
-				var childViewIdAttr = childElement.Attribute("Id");
-				var childViewStyleAttr = childElement.Attribute("Style");
-				var childThemeAttr = childElement.Attribute("Theme");
-				var childContext = GetValueConverterContext(context, childElement, view.GameObjectName);
-
-				var childView = CreateView(childElement.Name.LocalName, view, view, childContext,
-					childThemeAttr != null ? childThemeAttr.Value : theme,
-					childViewIdAttr != null ? childViewIdAttr.Value : String.Empty,
-					GetChildViewStyle(view.Style, childViewStyleAttr),
-					childElement.Elements());
-				SetViewValues(childView, childElement, view, childContext);
-			}
-
-			// search for a content placeholder
-			ContentPlaceholder contentContainer = view.Find<ContentPlaceholder>(true, view);
-			var contentLayoutParent = view;
-			if (contentContainer != null)
-			{
-				contentLayoutParent = contentContainer.LayoutParent;
-				view.Content = contentLayoutParent;
-
-				// remove placeholder
-				GameObject.DestroyImmediate(contentContainer.gameObject);
-			}
-
-			// parse content XUML and for each content child create views and set their values
-			if (contentXuml != null)
-			{
-				// create content views
-				foreach (var contentElement in contentXuml)
-				{
-					var contentElementIdAttr = contentElement.Attribute("Id");
-					var contentElementStyleAttr = contentElement.Attribute("Style");
-					var contentThemeAttr = contentElement.Attribute("Theme");
-					var contentContext = GetValueConverterContext(context, contentElement, view.GameObjectName);
-
-					var contentView = CreateView(contentElement.Name.LocalName, contentLayoutParent, parent, contentContext,
-						contentThemeAttr != null ? contentThemeAttr.Value : theme,
-						contentElementIdAttr != null ? contentElementIdAttr.Value : String.Empty,
-						GetChildViewStyle(view.Style, contentElementStyleAttr),
-						contentElement.Elements());
-					SetViewValues(contentView, contentElement, parent, contentContext);
-				}
-			}
-
-			// set view references
-			foreach (var referenceField in viewTypeData.ReferenceFields)
-			{
-				// is this a reference to a view?
-				var referencedView = view.Find<View>(x => String.Equals(x.Id, referenceField, StringComparison.OrdinalIgnoreCase),
-					true, view);
-				if (referencedView != null)
-				{
-					var referenceFieldInfo = viewType.GetField(referenceField);
-					referenceFieldInfo.SetValue(view, referencedView);
-				}
-			}
-
-			// set view default values
-			view.SetDefaultValues();
-
-			// set internal view values that appear inside the root element of the XUML file
-			SetViewValues(view, viewTypeData.XumlElement, view, context);
-
-			// set theme values
-			var themeData = GetThemeData(theme);
-			if (themeData != null)
-			{
-				foreach (var themeElement in themeData.GetThemeElementData(view.ViewTypeName, view.Id, view.Style))
-				{
-					var themeValueContext = new ValueConverterContext(context);
-					if (themeData.BaseDirectorySet)
-					{
-						themeValueContext.BaseDirectory = themeData.BaseDirectory;
-					}
-					if (themeData.UnitSizeSet)
-					{
-						themeValueContext.UnitSize = themeData.UnitSize;
-					}
-
-					SetViewValues(view, themeElement.XumlElement, view, themeValueContext);
-				}
-			}
-
-			return view;
-		}
-
-		/// <summary>
-		/// Creates view of specified type.
-		/// </summary>
-		public static T CreateView<T>(View layoutParent, View parent, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
-		{
-			Type viewType = typeof(T);
-			return CreateView(viewType.Name, layoutParent, parent, context, themeName, id, style, contentXuml) as T;
-		}
+        /// <summary>
+        /// Creates view of specified type.
+        /// </summary>
+        public static T CreateView<T>(View layoutParent, View parent, ValueConverterContext context = null, string themeName = "", string id = "", string style = "", IEnumerable<XElement> contentXuml = null) where T : View
+        {
+            Type viewType = typeof(T);
+            return CreateView(viewType.Name, layoutParent, parent, context, themeName, id, style, contentXuml) as T;
+        }
 
         /// <summary>
         /// Creates view of specified type.
@@ -736,7 +518,7 @@ namespace NUXML
             //      CreateView(contentView)
             //      SetViewValues(contentView)
             //   SetViewValues(view)       
-            //   SetThemeValues(view)     
+            //   SetThemeValues(view)
 
             // TODO store away and re-use view templates
 

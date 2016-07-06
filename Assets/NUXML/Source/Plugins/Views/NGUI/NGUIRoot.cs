@@ -24,7 +24,7 @@ namespace NUXML.Views.NGUI
 		#region Fields
 
 		[MapTo("UIRoot.Scaling")]
-		public _Scaling ScalingStyle;
+		public _Scaling_ ScalingStyle;
 
 		#endregion
 

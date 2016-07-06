@@ -24,9 +24,6 @@ namespace NUXML
         public MethodInfo    TransformMethod;
         public View          ParentView;       
 
-		public NGUIViewFieldData TargetNGUI;
-		public NGUIView          ParentNGUIView;
-
         #endregion
 
         #region Constructor
@@ -124,7 +121,7 @@ namespace NUXML
             {
                 default:
                 case BindingType.SingleBinding:
-                    Debug.LogError(String.Format("[NUXML] Exception thrown when propagating single binding value from source \"{0}\" to target \"{1}.{2}\": {3}", Sources[0].BindingSourceString, Target.SourceView.ViewTypeName, Target.ViewFieldPath, Utils.GetError(e)));
+                    Utils.LogError("[NUXML] Exception thrown when propagating single binding value from source \"{0}\" to target \"{1}.{2}\": {3}", Sources[0].BindingSourceString, Target.SourceView.ViewTypeName, Target.ViewFieldPath, Utils.GetError(e));
                     break;
 
                 case BindingType.MultiBindingTransform:
@@ -140,7 +137,7 @@ namespace NUXML
                         sb.AppendFormat(source.BindingSourceString);
                     }
 
-                    Debug.LogError(String.Format("[NUXML] Exception thrown when propagating single binding value from sources \"{0}\" to target \"{1}.{2}\": {3}", sb.ToString(), Target.SourceView.ViewTypeName, Target.ViewFieldPath, Utils.GetError(e)));
+                    Utils.LogError("[NUXML] Exception thrown when propagating single binding value from sources \"{0}\" to target \"{1}.{2}\": {3}", sb.ToString(), Target.SourceView.ViewTypeName, Target.ViewFieldPath, Utils.GetError(e));
                     break;
             }
         }    

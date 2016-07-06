@@ -252,45 +252,6 @@ namespace NUXML
         public static implicit operator Mesh(_Mesh value) { return value.Value; }
     }
 
-	#region NGUI
-
-	public class _UIInput : ViewField<UIInput>
-	{
-		public static implicit operator UIInput(_UIInput value) { return value.Value;}
-	}
-
-	public class _UILable : ViewField<UILabel>
-	{
-		public static implicit operator UILabel(_UILable value) { return value.Value;}
-	}
-
-	public class _UIPanel : ViewField<UIPanel>
-	{
-		public static implicit operator UIPanel(_UIPanel value) { return value.Value;}
-	}
-
-	public class _UIRoot : ViewField<UIRoot>
-	{
-		public static implicit operator UIRoot(_UIRoot value) { return value.Value;}
-	}
-
-	public class _Scaling : ViewField<UIRoot.Scaling>
-	{
-		public static implicit operator UIRoot.Scaling(_Scaling value) { return value.Value;}
-	}
-		
-	public class _UISprite : ViewField<UISprite>
-	{
-		public static implicit operator UISprite(_UISprite value) { return value.Value;}
-	}
-
-	public class _UIWidget : ViewField<UIWidget>
-	{
-		public static implicit operator UIWidget(_UIWidget value) { return value.Value;}
-	}
-
-	#endregion
-
     [Serializable]
     public class _object : ViewField<object> { }
 

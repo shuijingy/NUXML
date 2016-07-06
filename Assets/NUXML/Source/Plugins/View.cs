@@ -14,6 +14,9 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using NUXML.Views.UI;
+
+
 #endregion
 
 
@@ -289,7 +292,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(viewField);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, value, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, value, viewField);
                 return null;
             }
 
@@ -315,7 +318,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". Exception thrown: {3}", GameObjectName, value, viewField, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: Unable to assign value \"{1}\" to view field \"{2}\". Exception thrown: {3}", GameObjectName, value, viewField, Utils.GetError(e));
                 return null;
             }
         }
@@ -345,7 +348,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(viewField);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to set is-set indicator on view field \"{1}\". View field not found.", GameObjectName, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to set is-set indicator on view field \"{1}\". View field not found.", GameObjectName, viewField);
                 return;
             }
 
@@ -361,7 +364,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(viewField);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, viewFieldBinding, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View field not found.", GameObjectName, viewFieldBinding, viewField);
                 return;
             }
 
@@ -379,12 +382,12 @@ namespace NUXML
                 string[] bindings = trimmedBinding.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
                 if (bindings.Length < 1)
                 {
-                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Improperly formatted binding string.", GameObjectName, viewFieldBinding, viewField));
+                    Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Improperly formatted binding string.", GameObjectName, viewFieldBinding, viewField);
                     return;
                 }
 
                 bindingValueObserver.BindingType    = BindingType.MultiBindingTransform;
-				bindingValueObserver.ParentNGUIView = Parent;
+				bindingValueObserver.ParentView = Parent;
 
                 // get transformation method
                 string transformMethodName = bindings[0];
@@ -398,7 +401,7 @@ namespace NUXML
 
                     if (transformMethodViewType == null)
                     {
-                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, transformStr[0]));
+                        Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". View \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, transformStr[0]);
                         return;
                     }
                 }
@@ -406,7 +409,7 @@ namespace NUXML
                 bindingValueObserver.TransformMethod = transformMethodViewType.GetMethod(transformMethodName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
                 if (bindingValueObserver.TransformMethod == null)
                 {
-                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Transform method \"{3}\" not found in view type \"{4}\".", GameObjectName, viewFieldBinding, viewField, bindings[0], Parent.ViewTypeName));
+                    Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Transform method \"{3}\" not found in view type \"{4}\".", GameObjectName, viewFieldBinding, viewField, bindings[0], Parent.ViewTypeName);
                     return;
                 }
 
@@ -431,7 +434,7 @@ namespace NUXML
                     var sourceViewFieldData = bindingView.GetViewFieldData(sourceFieldName);
                     if (sourceViewFieldData == null)
                     {
-                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, binding));
+                        Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, binding);
                         return;
                     }
                     //Debug.Log(String.Format("Creating binding {0} <-> {1}", sourceViewFieldData.ViewFieldPath, viewFieldData.ViewFieldPath));
@@ -453,7 +456,7 @@ namespace NUXML
                 if (matches.Count <= 0)
                 {
                     // no bindings found
-                    Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". String contains no binding.", GameObjectName, viewFieldBinding, viewField));
+                    Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". String contains no binding.", GameObjectName, viewFieldBinding, viewField);
                     return;
                 }
 
@@ -498,7 +501,7 @@ namespace NUXML
                     var sourceViewFieldData = bindingView.GetViewFieldData(sourceFieldName);
                     if (sourceViewFieldData == null)
                     {
-                        Debug.LogError(String.Format("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, sourceFieldName));
+                        Utils.LogError("[NUXML] {0}: Unable to assign binding \"{1}\" to view field \"{2}\". Source binding view field \"{3}\" not found.", GameObjectName, viewFieldBinding, viewField, sourceFieldName);
                         return;
                     }
                     //Debug.Log(String.Format("Creating binding {0} <-> {1}", sourceViewFieldData.ViewFieldPath, viewFieldData.ViewFieldPath));
@@ -607,7 +610,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(entry.ViewActionFieldName);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign view action handler \"{1}.{2}()\" to view action \"{3}\". View action not found.", GameObjectName, Parent.ViewTypeName, entry.ViewActionHandlerName, entry.ViewActionFieldName));
+                Utils.LogError("[NUXML] {0}: Unable to assign view action handler \"{1}.{2}()\" to view action \"{3}\". View action not found.", GameObjectName, Parent.ViewTypeName, entry.ViewActionHandlerName, entry.ViewActionFieldName);
                 return;
             }
 
@@ -670,7 +673,7 @@ namespace NUXML
             }
             else
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign view change handler \"{1}()\" for view field \"{2}\". Change handler method not found.", GameObjectName, changeHandler.ChangeHandlerName, changeHandler.ViewField));
+                Utils.LogError("[NUXML] {0}: Unable to assign view change handler \"{1}()\" for view field \"{2}\". Change handler method not found.", GameObjectName, changeHandler.ChangeHandlerName, changeHandler.ViewField);
                 return;
             }
         }
@@ -720,7 +723,7 @@ namespace NUXML
             if (viewFieldData == null)
             {
                 hasValue = false;
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to get value from view field \"{1}\". View field not found.", GameObjectName, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to get value from view field \"{1}\". View field not found.", GameObjectName, viewField);
                 return null;
             }
 
@@ -731,7 +734,7 @@ namespace NUXML
             catch (Exception e)
             {
                 hasValue = false;
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to get value from view field \"{1}\". Exception thrown: {2}", GameObjectName, viewField, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: Unable to get value from view field \"{1}\". Exception thrown: {2}", GameObjectName, viewField, Utils.GetError(e));
                 return null;
             }
         }
@@ -753,7 +756,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(viewField);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to get set-value from view field \"{1}\". View field not found.", GameObjectName, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to get set-value from view field \"{1}\". View field not found.", GameObjectName, viewField);
                 return false;
             }
 
@@ -831,6 +834,7 @@ namespace NUXML
             }
 
             InitEventSystemTriggers();
+            IsInitialized = true;
         }
 
         /// <summary>
@@ -965,7 +969,7 @@ namespace NUXML
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError(String.Format("[NUXML] {0}: Exception thrown in change handler \"{1}\": {2}", GameObjectName, changeHandler, Utils.GetError(e)));
+                        Utils.LogError("[NUXML] {0}: Exception thrown in change handler \"{1}\": {2}", GameObjectName, changeHandler, Utils.GetError(e));
                     }
                 }
             }
@@ -1019,7 +1023,7 @@ namespace NUXML
             var viewFieldData = GetViewFieldData(viewField);
             if (viewFieldData == null)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Unable to set state value \"{1}-{2}\". View field \"{2}\" not found.", GameObjectName, state, viewField));
+                Utils.LogError("[NUXML] {0}: Unable to set state value \"{1}-{2}\". View field \"{2}\" not found.", GameObjectName, state, viewField);
                 return;
             }
 
@@ -1241,7 +1245,7 @@ namespace NUXML
                             var viewFieldData = GetViewFieldData(stateValue.ViewFieldPath);
                             if (viewFieldData == null)
                             {
-                                Debug.LogError(String.Format("[NUXML] {0}: Unable to assign default state value to view field \"{1}\". View field not found.", GameObjectName, stateValue.ViewFieldPath));
+                                Utils.LogError("[NUXML] {0}: Unable to assign default state value to view field \"{1}\". View field not found.", GameObjectName, stateValue.ViewFieldPath);
                             }
                             else
                             {
@@ -1523,7 +1527,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: InitializeInternalDefaultValues() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: InitializeInternalDefaultValues() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             InitializeInternalDefaultValues();
@@ -1542,7 +1546,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: InitializeInternal() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: InitializeInternal() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             InitializeInternal();
@@ -1561,7 +1565,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: Initialize() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: Initialize() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             Initialize();
@@ -1580,7 +1584,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: PropagateBindings() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: PropagateBindings() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             PropagateBindings();
@@ -1599,7 +1603,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: QueueAllChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: QueueAllChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             QueueAllChangeHandlers();
@@ -1618,7 +1622,7 @@ namespace NUXML
             }
             catch (Exception e)
             {
-                Debug.LogError(String.Format("[NUXML] {0}: TriggerChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e)));
+                Utils.LogError("[NUXML] {0}: TriggerChangeHandlers() failed. Exception thrown: {1}", GameObjectName, Utils.GetError(e));
             }
 #else
             TriggerChangeHandlers();

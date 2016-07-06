@@ -14,10 +14,27 @@ namespace NUXML
 	{
 		#region Fields
 
-		public NGUIView   ParentNGUIView;
-		public string     ViewFieldPath;
-		public bool       _isSet;
+		public NGUIView  ParentNGUIView;
+		public string    ViewFieldPath;
+      	public bool      IsMapped;
+		public bool      _isSet;
+      	public event EventHandler ValueSet;
 
-		#endregion
-	}
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Triggers the ValueSet event.
+        /// </summary>
+        public void TriggerValueSet()
+        {
+            if (ValueSet != null)
+            {
+                ValueSet(this, EventArgs.Empty);
+            }
+        }
+
+        #endregion
+    }
 }

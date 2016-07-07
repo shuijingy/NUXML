@@ -552,7 +552,7 @@ namespace NUXML
             // initialize value converter context
             if (context == null)
             {
-                context = ValueConverterContext.Default;
+				context = ValueConverterContext.DefaultNGUI;
             }
                         
             // create view from XUML

@@ -17,7 +17,7 @@ namespace NUXML
         #region Fields
 
         public string Name;
-        public bool TriggerImmediately;
+        public bool   TriggerImmediately;
 
         #endregion
 

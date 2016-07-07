@@ -39,7 +39,7 @@ namespace NUXML
             if (oldContext != null)
             {
                 BaseDirectory = oldContext.BaseDirectory;
-                UnitSize = oldContext.UnitSize;
+                UnitSize      = oldContext.UnitSize;
             }
         }
 
@@ -57,10 +57,22 @@ namespace NUXML
                 return new ValueConverterContext
                 {
                     BaseDirectory = ViewPresenter.Instance.BaseDirectory,
-                    UnitSize = ViewPresenter.Instance.UnitSize
+                    UnitSize      = ViewPresenter.Instance.UnitSize
                 };
             }
         }
+
+		public static ValueConverterContext DefaultNGUI
+		{
+			get
+			{
+				return new ValueConverterContext
+				{
+					BaseDirectory = NGUIViewPresenter.Instance.BaseDirectory,
+					UnitSize      = NGUIViewPresenter.Instance.UnitSize
+				};
+			}
+		}
 
         #endregion
     }

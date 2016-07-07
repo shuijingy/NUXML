@@ -44,7 +44,6 @@ namespace NUXML.Editor
 				// .. trigger reload on view presenter
 				if (!viewPresenter.DisableAutomaticReload)
 				{
-					//ViewData.GenerateViews();
 					NGUIViewData.GenerateNGUIViews();
 				}
 			}
@@ -109,7 +108,7 @@ namespace NUXML.Editor
 			GUIContent generateSchemaContent = new GUIContent("Generate Schema", "Generates a new XSD schema for all the views. Used to get intellisense when editing XUML in visual studio. Schema need to be generated when new views are added, renamed or new view fields are added.");
 			if (GUILayout.Button(generateSchemaContent))
 			{
-				ViewPostprocessor.GenerateXsdSchema();
+				NGUIViewPostprocessor.GenerateXsdSchema();
 			}
 
 			// reload button

@@ -96,7 +96,7 @@ namespace NUXML.Editor
 
             // uncomment to log load performance
             //Utils.Log("Total view processing time: {0}", sw.ElapsedMilliseconds);
-            Utils.Log("[MarkLight] Views processed. {0}", DateTime.Now);
+            Utils.Log("[NUXML] Views processed. {0}", DateTime.Now);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace NUXML.Editor
         {
             if (ViewPresenter.Instance == null)
             {
-                Utils.LogError("[MarkLight] Unable to generate XSD schema. View presenter can't be found in scene. Make sure the view presenter is enabled.");
+                Utils.LogError("[NUXML] Unable to generate XSD schema. View presenter can't be found in scene. Make sure the view presenter is enabled.");
                 return;
             }
 
@@ -265,7 +265,7 @@ namespace NUXML.Editor
             File.WriteAllText(String.Format("{0}/{1}", Application.dataPath, localPath), sb.ToString());
 
             // print result
-            Debug.Log(String.Format("[MarkLight] Schema generated at \"{0}\"", Configuration.Instance.SchemaFile));
+            Debug.Log(String.Format("[NUXML] Schema generated at \"{0}\"", Configuration.Instance.SchemaFile));
         }
 
         #endregion

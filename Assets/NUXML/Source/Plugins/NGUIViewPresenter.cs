@@ -89,29 +89,29 @@ namespace NUXML
 			UnitSize      = new Vector3(40, 40, 40);
 		}
 
-		#endregion
+        #endregion
 
-		#region Methods
+        #region Methods
 
-		/// <summary>
-		/// Called once at startup.
-		/// </summary>
-		public void Awake()
-		{
-			Initialize();
-		}
+        /// <summary>
+        /// Called once at startup.
+        /// </summary>
+        public void Awake()
+        {
+            Initialize();
+        }
 
-		/// <summary>
-		/// Called once to initialize views and runtime data.
-		/// </summary>
-		public override void Initialize()
-		{
-			UpdateInstance();
+        /// <summary>
+        /// Called once to initialize views and runtime data.
+        /// </summary>
+        public override void Initialize()
+        {
+            UpdateInstance();
 
-			// initialize resource dictionary
-			ResourceDictionary.Language = DefaultLanguage;
-			ResourceDictionary.Platform = DefaultPlatform;
-			ResourceDictionary.Initialize();
+            // initialize resource dictionary
+            ResourceDictionary.Language = DefaultLanguage;
+            ResourceDictionary.Platform = DefaultPlatform;
+			ResourceDictionary.InitializeNGUI();
 
 			// initialize all views in the scene
 			InitializeNGUIViews(RootView);
@@ -187,8 +187,8 @@ namespace NUXML
 				}
 			}
 
-			Utils.LogError(String.Format("[NUXML] Error initializing views. Stack overflow when triggering change handlers. Make sure your change handlers doesn't trigger each other in a loop. The following change handlers were still triggered after {0} passes:{1}{2}", pass, Environment.NewLine, sb.ToString()));
-		}
+            Utils.LogError("[NUXML] Error initializing views. Stack overflow when triggering change handlers. Make sure your change handlers doesn't trigger each other in a loop. The following change handlers were still triggered after {0} passes:{1}{2}", pass, Environment.NewLine, sb.ToString());
+        }
 
 		/// <summary>
 		/// Removes all view data from presenter and clears the scene.
@@ -213,28 +213,28 @@ namespace NUXML
 			_materialDictionary     = null;
 			_viewTypes              = null;
 
-			if (RootView != null)
-			{
-				GameObject.DestroyImmediate(RootView);
-			}
-		}
+            if (RootView != null)
+            {
+                GameObject.DestroyImmediate(RootView);
+            }
+        }
 
-		/// <summary>
-		/// Gets view type data.
-		/// </summary>
-		public ViewTypeData GetViewTypeData(string viewTypeName)
-		{
-			if (_viewTypeDataDictionary == null)
-			{
-				LoadViewTypeDataDictionary();
-			}
+        /// <summary>
+        /// Gets view type data.
+        /// </summary>
+        public ViewTypeData GetViewTypeData(string viewTypeName)
+        {
+            if (_viewTypeDataDictionary == null)
+            {
+                LoadViewTypeDataDictionary();
+            }
 
-			ViewTypeData viewTypeData;
-			if (!_viewTypeDataDictionary.TryGetValue(viewTypeName, out viewTypeData))
-			{
-				Utils.LogError(String.Format("[NUXML] Can't find view type \"{0}\".", viewTypeName));
-				return null;
-			}
+            ViewTypeData viewTypeData;
+            if (!_viewTypeDataDictionary.TryGetValue(viewTypeName, out viewTypeData))
+            {
+                Utils.LogError("[NUXML] Can't find view type \"{0}\".", viewTypeName);
+                return null;
+            }
 
             return viewTypeData;
         }

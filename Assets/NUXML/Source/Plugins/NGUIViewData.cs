@@ -546,7 +546,7 @@ namespace NUXML
             // use default theme if no theme is specified
             if (String.IsNullOrEmpty(theme))
             {
-                theme = ViewPresenter.Instance.DefaultTheme;
+                theme = NGUIViewPresenter.Instance.DefaultTheme;
             }
 
             // initialize value converter context

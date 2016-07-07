@@ -52,7 +52,7 @@ namespace NUXML
         static ResourceDictionary()
         {
             _resourceBindingObservers = new Dictionary<string, List<WeakReference>>();
-            _observersToBeNotified = new HashSet<WeakReference>();
+            _observersToBeNotified    = new HashSet<WeakReference>();
             _resourceLookupDictionary = new Dictionary<string, List<Resource>>();
         }
 
@@ -200,6 +200,9 @@ namespace NUXML
         /// </summary>
         public static void SetResource(string dictionaryName, Resource resource)
         {
+
+			Utils.Log("SetResource() ---> " + dictionaryName);
+
             var fullResourceKey = GetFullResourceKey(dictionaryName, resource.Key);
             if (!_resourceLookupDictionary.ContainsKey(fullResourceKey))
             {
@@ -288,6 +291,21 @@ namespace NUXML
                 }
             }
         }
+
+		/// <summary>
+		/// Called once at startup and initializes the runtime dictionary.
+		/// </summary>
+		public static void InitializeNGUI()
+		{
+			_resourceLookupDictionary = new Dictionary<string, List<Resource>>();
+			foreach (var resourceDictionary in NGUIViewPresenter.Instance.ResourceDictionaries)
+			{
+				foreach (var resource in resourceDictionary.Resources)
+				{
+					SetResource(resourceDictionary.Name, resource);
+				}
+			}
+		}
 
         /// <summary>
         /// Gets full resource key from dictionary name and resource key.

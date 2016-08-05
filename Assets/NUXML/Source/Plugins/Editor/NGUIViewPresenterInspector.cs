@@ -116,7 +116,7 @@ namespace NUXML.Editor
 			if (GUILayout.Button(reloadViewsContent))
 			{
 				// .. trigger reload of views
-				ViewPostprocessor.ProcessViewAssets();
+				NGUIViewPostprocessor.ProcessViewAssets();
 			}
 		}
 

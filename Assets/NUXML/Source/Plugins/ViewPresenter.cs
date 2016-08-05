@@ -138,8 +138,8 @@ namespace NUXML
 
             rootView.ForThisAndEachChild<View>(x => x.TryInitializeInternalDefaultValues());
             rootView.ForThisAndEachChild<View>(x => x.TryInitializeInternal());
-            rootView.ForThisAndEachChild<View>(x => x.TryInitialize(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
-            rootView.ForThisAndEachChild<View>(x => x.TryPropagateBindings(), true, null, TraversalAlgorithm.BreadthFirst);
+            rootView.ForThisAndEachChild<View>(x => x.TryInitialize(),             true, null, TraversalAlgorithm.ReverseBreadthFirst);
+            rootView.ForThisAndEachChild<View>(x => x.TryPropagateBindings(),      true, null, TraversalAlgorithm.BreadthFirst);
             rootView.ForThisAndEachChild<View>(x => x.TryQueueAllChangeHandlers(), true, null, TraversalAlgorithm.ReverseBreadthFirst);
 
             // notify dictionary observers
@@ -205,12 +205,12 @@ namespace NUXML
             MaterialPaths.Clear();
 
             _viewTypeDataDictionary = null;
-            _themeDataDictionary = null;
-            _resourceDictionaries = null;
-            _spriteDictionary = null;
-            _fontDictionary = null;
-            _materialDictionary = null;
-            _viewTypes = null;
+            _themeDataDictionary    = null;
+            _resourceDictionaries   = null;
+            _spriteDictionary       = null;
+            _fontDictionary         = null;
+            _materialDictionary     = null;
+            _viewTypes              = null;
 
             if (RootView != null)
             {
@@ -443,22 +443,22 @@ namespace NUXML
                 _valueConvertersForType = new Dictionary<string, ValueConverter>();
 
                 // cache standard converters to improve load performance
-                _valueConvertersForType.Add("Object", new ValueConverter());
-                _valueConvertersForType.Add("Single", new FloatValueConverter());
-                _valueConvertersForType.Add("Int32", new IntValueConverter());
-                _valueConvertersForType.Add("Boolean", new BoolValueConverter());
-                _valueConvertersForType.Add("Color", new ColorValueConverter());
-                _valueConvertersForType.Add("ElementSize", new ElementSizeValueConverter());
-                _valueConvertersForType.Add("Enum", new EnumValueConverter());
-                _valueConvertersForType.Add("Font", new FontValueConverter());
+                _valueConvertersForType.Add("Object",        new ValueConverter());
+                _valueConvertersForType.Add("Single",        new FloatValueConverter());
+                _valueConvertersForType.Add("Int32",         new IntValueConverter());
+                _valueConvertersForType.Add("Boolean",       new BoolValueConverter());
+                _valueConvertersForType.Add("Color",         new ColorValueConverter());
+                _valueConvertersForType.Add("ElementSize",   new ElementSizeValueConverter());
+                _valueConvertersForType.Add("Enum",          new EnumValueConverter());
+                _valueConvertersForType.Add("Font",          new FontValueConverter());
                 _valueConvertersForType.Add("ElementMargin", new MarginValueConverter());
-                _valueConvertersForType.Add("Material", new MaterialValueConverter());
-                _valueConvertersForType.Add("Quaternion", new QuaternionValueConverter());
-                _valueConvertersForType.Add("Sprite", new SpriteValueConverter());
-                _valueConvertersForType.Add("String", new StringValueConverter());
-                _valueConvertersForType.Add("Vector2", new Vector2ValueConverter());
-                _valueConvertersForType.Add("Vector3", new Vector3ValueConverter());
-                _valueConvertersForType.Add("Vector4", new Vector4ValueConverter());
+                _valueConvertersForType.Add("Material",      new MaterialValueConverter());
+                _valueConvertersForType.Add("Quaternion",    new QuaternionValueConverter());
+                _valueConvertersForType.Add("Sprite",        new SpriteValueConverter());
+                _valueConvertersForType.Add("String",        new StringValueConverter());
+                _valueConvertersForType.Add("Vector2",       new Vector2ValueConverter());
+                _valueConvertersForType.Add("Vector3",       new Vector3ValueConverter());
+                _valueConvertersForType.Add("Vector4",       new Vector4ValueConverter());
 
                 foreach (var valueConverterType in TypeHelper.FindDerivedTypes(typeof(ValueConverter)))
                 {

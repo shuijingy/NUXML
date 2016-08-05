@@ -571,10 +571,10 @@ namespace NUXML
         /// </summary>
         private string ParseBindingString(string binding, out bool isLocalField, out bool isNegatedField, out bool isOneWay, out bool isResource)
         {
-            isLocalField = false;
+            isLocalField   = false;
             isNegatedField = false;
-            isOneWay = false;
-            isResource = false;
+            isOneWay       = false;
+            isResource     = false;
 
             var viewField = binding;
             while (viewField.Length > 0)
@@ -819,7 +819,7 @@ namespace NUXML
             }
 
             // initialize change handlers
-            var viewTypeData = ViewData.GetViewTypeData(ViewTypeName);
+            var viewTypeData = NGUIViewData.GetViewTypeData(ViewTypeName);
             foreach (var changeHandler in viewTypeData.ViewFieldChangeHandlers)
             {
                 SetChangeHandler(changeHandler);

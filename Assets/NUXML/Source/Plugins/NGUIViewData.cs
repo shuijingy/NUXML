@@ -164,15 +164,15 @@ namespace NUXML
 		{
 			Debug.Log("--> LoadViewXuml:" + xumlElement.Name);
 
-            var viewPresenter = ViewPresenter.Instance;
+            var viewPresenter = NGUIViewPresenter.Instance;
             viewPresenter.ViewTypeDataList.RemoveAll(x => String.Equals(x.ViewName, xumlElement.Name.LocalName, StringComparison.OrdinalIgnoreCase));
 
             var viewTypeData = new ViewTypeData();
             viewPresenter.ViewTypeDataList.Add(viewTypeData);
 
-            viewTypeData.Xuml = xuml;
+            viewTypeData.Xuml        = xuml;
             viewTypeData.XumlElement = xumlElement;
-            viewTypeData.ViewName = xumlElement.Name.LocalName;
+            viewTypeData.ViewName    = xumlElement.Name.LocalName;
 
             // set dependency names
             foreach (var descendant in xumlElement.Descendants())

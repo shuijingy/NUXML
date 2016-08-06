@@ -181,6 +181,23 @@ namespace NUXML
             return value % 2 == 0;
         }
 
+		public static string GetGameObjectPath(GameObject obj)
+		{
+			if (obj == null)
+			{
+				return "";
+			}
+
+			string path = "/" + obj.name;
+
+			while (obj.transform.parent != null)
+			{
+				obj = obj.transform.parent.gameObject;
+				path = "/" + obj.name + path;
+			}
+			return path;
+		}
+
         #endregion
     }
 }

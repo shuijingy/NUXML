@@ -3,7 +3,7 @@ using System.Collections;
 
 using NUXML;
 
-public class TestNGUIView : View 
+public class TestNGUIView : NGUIView 
 {
 	#region Fields
 	#endregion

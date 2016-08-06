@@ -224,6 +224,8 @@ namespace NUXML
         /// </summary>
         public ViewTypeData GetViewTypeData(string viewTypeName)
         {
+			Utils.Log("[NUXML] GetViewTypeData: " + viewTypeName );
+			
             if (_viewTypeDataDictionary == null)
             {
                 LoadViewTypeDataDictionary();
@@ -422,10 +424,11 @@ namespace NUXML
         /// </summary>
         public Type GetViewType(string viewTypeName)
         {
+			UnityEngine.Debug.Log("--> viewTypeName: " + viewTypeName);
             if (_viewTypes == null)
             {
                 _viewTypes = new Dictionary<string, Type>();
-                foreach (var viewType in TypeHelper.FindDerivedTypes(typeof(View)))
+                foreach (var viewType in TypeHelper.FindDerivedTypes(typeof(NGUIView)))
                 {
                     _viewTypes.Add(viewType.Name, viewType);
                 }

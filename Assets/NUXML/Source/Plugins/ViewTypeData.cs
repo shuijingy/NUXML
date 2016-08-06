@@ -168,6 +168,24 @@ namespace NUXML
             return _viewFields.Get(field);
         }
 
+		/// <summary>
+		/// Returns view field.
+		/// </summary>
+		public FieldInfo GetNGUIViewField(string field)
+		{
+			if (_viewFields == null)
+			{
+				_viewFields = new Dictionary<string, FieldInfo>();
+				var viewType = NGUIViewData.GetViewType(ViewName);                
+				foreach (var viewField in viewType.GetFields())
+				{
+					_viewFields.Add(viewField.Name, viewField);                    
+				}
+			}
+
+			return _viewFields.Get(field);
+		}
+
         /// <summary>
         /// Gets view field path info for the field.
         /// </summary>

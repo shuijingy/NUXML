@@ -92,21 +92,21 @@ namespace NUXML
         /// <d>View state name. Determines state values to be applied to the view. All views start out in the "Default" state and when the state changes the values associated with that state are applied to the view.</d>
         [ChangeHandler("StateChanged", TriggerImmediately = true)]
         [NotSetFromXuml]
-        public _string State;
+        public _string_ State;
 
         /// <summary>
         /// Indicates if the view is enabled.
         /// </summary>
         /// <d>Activates/deactivates the view. If set to false in this or in any parent view, all components are disabled, attached renderers are turned off, etc. Any components attached will no longer have Update() called.</d>
         [ChangeHandler("IsActiveChanged", TriggerImmediately = true)]
-        public _bool IsActive;
+        public _bool_ IsActive;
 
         /// <summary>
         /// Hide flags for the game object.
         /// </summary>
         /// <d>Bit mask that controls object destruction, saving and visibility in editor.</d>
         [MapTo("GameObject.hideFlags")]
-        public _HideFlags HideFlags;
+        public _HideFlags_ HideFlags;
 
         /// <summary>
         /// GameObject the view is attached to.
@@ -127,21 +127,21 @@ namespace NUXML
         /// </summary>
         /// <d>The local position of the view in relation to the layout parent view transform.</d>
         [MapTo("Transform.localPosition")]
-        public _Vector3 Position;
+        public _Vector3_ Position;
 
         /// <summary>
         /// Rotation of the view.
         /// </summary>
         /// <d>The local rotation of the view in relation to the layout parent view transform. Stored as a Quaternion but specified in XUML as euler angles.</d>
         [MapTo("Transform.localRotation")]
-        public _Quaternion Rotation;
+        public _Quaternion_ Rotation;
 
         /// <summary>
         /// Scale of the view.
         /// </summary>
         /// <d>The scale of the view in relation to the layout parent view transform.</d>
         [MapTo("Transform.localScale")]
-        public _Vector3 Scale;
+        public _Vector3_ Scale;
 
         #endregion
 
@@ -150,37 +150,37 @@ namespace NUXML
         /// </summary>
         /// <d>Provides a mechanism to bind to dynamic list data. The item is set, e.g. by the List view on the child views it generates for its dynamic list data. The Item points to the list item data the view is associated with.</d>
         [GenericViewField]
-        public _object Item;
+        public _object_ Item;
 
         /// <summary>
         /// Indicates if this view is to be used as a template.
         /// </summary>
         /// <d>A template view is used to create dynamic instances of the view. Used by certain views such as the List and TabPanel.</d>
-        public _bool IsTemplate;
+        public _bool_ IsTemplate;
 
         /// <summary>
         /// Activated view action.
         /// </summary>
         /// <d>Triggered every time the view is activated. Also triggered once the view is intialized if it starts out activated.</d>
-        public ViewAction Activated;
+        public NGUIViewAction Activated;
 
         /// <summary>
         /// Deactivated view action.
         /// </summary>
         /// <d>Triggered every time the view is deactivated. Also triggered once the view is intialized if it starts out deactivated.</d>
-        public ViewAction Deactivated;
+		public NGUIViewAction Deactivated;
 
         /// <summary>
         /// Indicates if the view has been destroyed by GameObject.Destroy().
         /// </summary>
         [NotSetFromXuml]
-        public _bool IsDestroyed;
+        public _bool_ IsDestroyed;
 
         /// <summary>
         /// Indicates if the view has been created dynamically. 
         /// </summary>
         [NotSetFromXuml]
-        public _bool IsDynamic;
+        public _bool_ IsDynamic;
 
         /// <summary>
         /// The name of the view's type.
@@ -1153,9 +1153,9 @@ namespace NUXML
         /// </summary>
         public virtual void SetDefaultValues()
         {
-            ViewTypeName = GetType().Name;
-            GameObject = gameObject;
-            State.DirectValue = DefaultStateName;
+            ViewTypeName      = GetType().Name;
+            GameObject        = gameObject;
+			State.DirectValue = DefaultStateName;
             IsActive.DirectValue = true;
         }
 

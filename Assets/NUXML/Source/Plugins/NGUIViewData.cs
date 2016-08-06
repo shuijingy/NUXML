@@ -187,7 +187,7 @@ namespace NUXML
             var type = GetViewType(viewTypeData.ViewName);
             if (type == null)
             {
-                type = typeof(View);
+                type = typeof(NGUIView);
             }
 
             // set if view is internal
@@ -567,7 +567,7 @@ namespace NUXML
             var viewType = GetViewType(viewName);
             if (viewType == null)
             {
-                viewType = typeof(View);
+                viewType = typeof(NGUIView);
             }
 
 			Debug.Log("->> viewType: " + viewType.ToString());
@@ -620,7 +620,7 @@ namespace NUXML
 			foreach (var viewActionField in viewTypeData.ViewActionFields)
 			{
 				Debug.Log("->> componentField: " + viewActionField);	
-				var viewActionFieldInfo = viewTypeData.GetViewField(viewActionField);
+				var viewActionFieldInfo = viewTypeData.GetNGUIViewField(viewActionField);
 				viewActionFieldInfo.SetValue(view, new NGUIViewAction(viewActionField));
 			}
 
@@ -628,7 +628,7 @@ namespace NUXML
 			foreach (var dependencyField in viewTypeData.DependencyFields)
 			{
 				Debug.Log("->> dependencyField: " + dependencyField);		
-                var dependencyFieldInfo = viewTypeData.GetViewField(dependencyField);
+				var dependencyFieldInfo = viewTypeData.GetNGUIViewField(dependencyField);
 				var dependencyFieldInstance = TypeHelper.CreateNGUIViewField(dependencyFieldInfo.FieldType);
                 dependencyFieldInfo.SetValue(view, dependencyFieldInstance);
 				dependencyFieldInstance.ParentNGUIView = view;

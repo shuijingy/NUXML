@@ -16,9 +16,9 @@ namespace NUXML
     {
         #region Fields
 
-        public string BaseDirectory;
+        public string  BaseDirectory;
         public Vector3 UnitSize;
-        public static ValueConverterContext Empty = new ValueConverterContext();
+        public static  ValueConverterContext Empty = new ValueConverterContext();
 
         #endregion
 

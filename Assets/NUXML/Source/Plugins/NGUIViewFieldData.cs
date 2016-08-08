@@ -319,7 +319,7 @@ namespace NUXML
 		/// </summary>
 		public bool ParseViewFieldPath()
 		{
-			SevereParseError = false;
+			SevereParseError    = false;
 			ViewFieldPathParsed = false;
 			NGUIViewFieldPathInfo.MemberInfo.Clear();
 			NGUIViewFieldPathInfo.Dependencies.Clear();
@@ -384,9 +384,9 @@ namespace NUXML
 
 				if (isLastField)
 				{
-					ViewFieldType = memberInfo.GetFieldType();
+					ViewFieldType     = memberInfo.GetFieldType();
 					ViewFieldTypeName = ViewFieldType.Name;
-					ValueConverter = ValueConverter ?? ViewData.GetValueConverterForType(ViewFieldTypeName);
+					ValueConverter = ValueConverter ?? NGUIViewData.GetValueConverterForType(ViewFieldTypeName);
 
 					// handle special case if converter is null and field type is enum
 					if (ValueConverter == null && ViewFieldType.IsEnum())

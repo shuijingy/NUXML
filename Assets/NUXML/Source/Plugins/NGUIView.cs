@@ -1191,7 +1191,7 @@ namespace NUXML
         /// </summary>
         public virtual void LayoutChanged()
         {            
-            //Debug.Log(ViewTypeName + ": LayoutChanged called");
+            Debug.Log(ViewTypeName + ": LayoutChanged called");
         }
 
         /// <summary>
@@ -1199,6 +1199,7 @@ namespace NUXML
         /// </summary>
         public virtual void BehaviorChanged()
         {
+			Debug.Log(ViewTypeName + ": BehaviorChanged called");	
         }
 
         /// <summary>
@@ -1357,20 +1358,13 @@ namespace NUXML
 		/// <summary>
 		/// Creates a child view of specified type.
 		/// </summary>
-		public T CreateNGUIView<T>(int siblingIndex = -1, 
-								   ValueConverterContext context = null, 
+		public T CreateNGUIView<T>(ValueConverterContext context = null, 
 								   string themeName = "", 
-								   string id = "", 
-								   string style = "", 
+								   string id        = "", 
+								   string style     = "", 
 								   IEnumerable<XElement> contentXuml = null) where T : NGUIView
 		{
 			var view = NGUIViewData.CreateNGUIView<T>(this, this, context, themeName, Id, style);
-
-			// set view sibling index
-			if (siblingIndex > 0)
-			{
-				view.GameObject.transform.SetSiblingIndex(siblingIndex);
-			}
 
 			view.IsDynamic.DirectValue = true;
 			return view;           
@@ -1379,7 +1373,7 @@ namespace NUXML
 		/// <summary>
 		/// Creates a view from a template and adds it to a parent at specified index.
 		/// </summary>
-		public static T CreateNGUIView<T>(T template, NGUIView layoutParent, int siblingIndex = -1) where T : NGUIView
+		public static T CreateNGUIView<T>(T template, NGUIView layoutParent) where T : NGUIView
 		{
 			// instantiate template
 			var go = Instantiate(template.gameObject) as GameObject;            
@@ -1390,10 +1384,6 @@ namespace NUXML
 
 			// set view parent
 			var view = go.GetComponent<T>();
-			if (siblingIndex > 0)
-			{
-				go.transform.SetSiblingIndex(siblingIndex);
-			}
 
 			view.IsTemplate.DirectValue = false;
 			view.IsDynamic.DirectValue  = true;
@@ -1403,9 +1393,9 @@ namespace NUXML
 		/// <summary>
 		/// Creates a child view from a template.
 		/// </summary>
-		public T CreateNGUIView<T>(T template, int siblingIndex = -1) where T : NGUIView
+		public T CreateNGUIView<T>(T template) where T : NGUIView
 		{
-			return CreateNGUIView(template, this, siblingIndex);
+			return CreateNGUIView(template, this);
 		}
 
         /// <summary>
@@ -1768,7 +1758,7 @@ namespace NUXML
         {
             get
             {
-                var viewName = ViewTypeName == "View" ? ViewXumlName : ViewTypeName;                
+                var viewName = ViewTypeName == "NGUIView" ? ViewXumlName : ViewTypeName;                
                 return !String.IsNullOrEmpty(Id) ? String.Format("{0} ({1})", viewName, Id) : viewName;
             }
         }

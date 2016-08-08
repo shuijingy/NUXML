@@ -17,7 +17,7 @@ namespace NUXML.Views.NGUI
 	/// </summary>
 	/// <d>Presents (read-only) text. Can adjust its size to text. Can display rich text with BBCode style syntax.</d>
 	[HideInPresenter]
-	public class NGUILabel : UIView
+	public class NGUILabel : NGUIView
 	{
 		#region Fields
 
@@ -34,35 +34,35 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The text of the label. The label can be set to adjust its size to the text through the AdjustToText field.</d>
 		[MapTo("TextComponent.text", "TextChanged")]
-		public _string Text;
+		public _string_ Text;
 
 		/// <summary>
 		/// Label text font.
 		/// </summary>
 		/// <d>The font of the label text.</d>
 		[MapTo("TextComponent.font", "TextStyleChanged")]
-		public _Font Font;
+		public _Font_ Font;
 
 		/// <summary>
 		/// Label text font size.
 		/// </summary>
 		/// <d>The size of the label text.</d>
 		[MapTo("TextComponent.fontSize", "TextStyleChanged")]
-		public _int FontSize;
+		public _int_ FontSize;
 
 		/// <summary>
 		/// Label text font color.
 		/// </summary>
 		/// <d>The font color of the label text.</d>
 		[MapTo("TextComponent.color")]
-		public _Color FontColor;
+		public _Color_ FontColor;
 
 		/// <summary>
 		/// Label text font style.
 		/// </summary>
 		/// <d>The font style of the label text.</d>
 		[MapTo("TextComponent.fontStyle", "TextStyleChanged")]
-		public _FontStyle FontStyle;
+		public _FontStyle_ FontStyle;
 
 		#endregion
 
@@ -71,14 +71,14 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The alignment of the text inside the label. Can be used with TextMargin and TextOffset to get desired positioning of the text.</d>
 		[ChangeHandler("BehaviorChanged")]
-		public _ElementAlignment TextAlignment;
+		public _ElementAlignment_ TextAlignment;
 
 		/// <summary>
 		/// Adjust label to text.
 		/// </summary>
 		/// <d>An enum indiciating how the label should adjust its size to the label text. By default the label does not adjust its size to the text.</d>
 		[ChangeHandler("LayoutChanged")]
-		public _AdjustToText AdjustToText;
+		public _AdjustToText_ AdjustToText;
 
 		private static Regex _tagRegex = new Regex(@"\[(?<tag>[^\]]+)\]");
 
@@ -93,8 +93,8 @@ namespace NUXML.Views.NGUI
 		{
 			base.SetDefaultValues();
 
-			Width.DirectValue  = new ElementSize(120);
-			Height.DirectValue = new ElementSize(40);
+//			Width.DirectValue  = new ElementSize(120);
+//			Height.DirectValue = new ElementSize(40);
 
 			TextAlignment.DirectValue = ElementAlignment.Left;
 			if (TextComponent != null)

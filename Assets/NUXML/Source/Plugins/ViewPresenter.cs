@@ -22,7 +22,7 @@ namespace NUXML
     /// <summary>
     /// NUXML Presentation Engine.
     /// </summary>
-    [AddComponentMenu("NUXML/View Presenter")]
+    [AddComponentMenu("NUXML/uGUI View Presenter")]
     public class ViewPresenter : View
     {
         #region Fields

@@ -67,7 +67,7 @@ namespace NUXML
 		/// </summary>
 		internal void Trigger()
 		{
-			//Debug.Log(String.Format("{0}.{1}() triggered!", ParentView.ViewTypeName, ChangeHandlerName));
+			Debug.Log(String.Format("{0}.{1}() triggered!", ParentNGUIView.ViewTypeName, ChangeHandlerName));
 			try
 			{
 				_changeHandlerMethod.Invoke(ParentNGUIView, null);

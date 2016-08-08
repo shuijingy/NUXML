@@ -26,7 +26,7 @@ namespace NUXML
 	/// <summary>
 	/// NUXML Presentation Engine.
 	/// </summary>
-	[AddComponentMenu("NUXML/NGUIView Presenter")]
+	[AddComponentMenu("NUXML/NGUI View Presenter")]
 	public class NGUIViewPresenter : NGUIView
 	{
 		#region Fields

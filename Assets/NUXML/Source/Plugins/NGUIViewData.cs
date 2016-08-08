@@ -501,8 +501,8 @@ namespace NUXML
 										  NGUIView parent, 
 										  ValueConverterContext context = null, 
 										  string themeName = "", 
-										  string id    = "", 
-										  string style = "", 
+										  string id        = "", 
+										  string style     = "", 
 										  IEnumerable<XElement> contentXuml = null) where T : NGUIView
 		{
 			Type viewType = typeof(T);
@@ -576,7 +576,8 @@ namespace NUXML
 			var go = new GameObject(viewTypeData.ViewName);
 			if (typeof(NGUIView).IsAssignableFrom(viewType))
 			{
-				go.AddComponent<RectTransform>();
+				//go.AddComponent<RectTransform>();
+				go.AddComponent<UIWidget>();
 			}
 			go.transform.SetParent(layoutParent.transform, false);
 
@@ -597,17 +598,16 @@ namespace NUXML
 				Debug.Log("->> componentField: " + componentField);
 
 				if (viewTypeData.ExcludedComponentFields.Contains(componentField))
+				{
 					continue; // exclude component
+				}
 
 				var componentFieldInfo = viewType.GetField(componentField);
+
 				Component component = null;
 				if (componentField == "Transform")
 				{
                     component = go.transform;
-                }
-                else if (componentField == "RectTransform")
-                {
-                    component = go.transform as RectTransform;
                 }
                 else
                 {

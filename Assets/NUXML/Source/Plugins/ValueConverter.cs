@@ -28,7 +28,7 @@ namespace NUXML
         /// </summary>
         public ValueConverter()
         {
-            _type = typeof(object);
+            _type       = typeof(object);
             _stringType = typeof(string);
         }
 

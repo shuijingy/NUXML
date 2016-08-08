@@ -21,7 +21,7 @@ namespace NUXML.Views.NGUI
 	/// <d>The UIButton view is a clickable region with text. Has the states: Default, Highlighted, Pressed and Disabled. 
 	/// The button can be set to toggle through IsToggleButton and to adjust its size to its text through the AdjustToText field.</d>
 	[HideInPresenter]
-	public class NGUIButton : UIView
+	public class NGUIButton : NGUIView
 	{
 		#region Fields
 
@@ -38,21 +38,21 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The text of the button label. The button can be set to adjust its size to the text through the AdjustToText field.</d>
 		[MapTo("ButtonLabel.Text", "TextChanged")]
-		public _string Text;
+		public _string_ Text;
 
 		/// <summary>
 		/// Button text font.
 		/// </summary>
 		/// <d>The font of the button label text.</d>
 		[MapTo("ButtonLabel.Font")]
-		public _Font Font;
+		public _Font_ Font;
 
 		/// <summary>
 		/// Button text font size.
 		/// </summary>
 		/// <d>The size of the button label text.</d>
 		[MapTo("ButtonLabel.FontSize")]
-		public _int FontSize;
+		public _int_ FontSize;
 
 //		/// <summary>
 //		/// Button text line spacing.
@@ -73,14 +73,14 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The font color of the button label text.</d>
 		[MapTo("ButtonLabel.FontColor")]
-		public _Color FontColor;
+		public _Color_ FontColor;
 
 		/// <summary>
 		/// Button text font style.
 		/// </summary>
 		/// <d>The font style of the button label text.</d>
 		[MapTo("ButtonLabel.FontStyle")]
-		public _FontStyle FontStyle;
+		public _FontStyle_ FontStyle;
 
 		/// <summary>
 		/// Button text margin.
@@ -108,35 +108,35 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The shadow color of the button label text.</d>
 		[MapTo("ButtonLabel.ShadowColor")]
-		public _Color ShadowColor;
+		public _Color_ ShadowColor;
 
 		/// <summary>
 		/// Button text shadow distance.
 		/// </summary>
 		/// <d>The distance of the button label text shadow.</d>
 		[MapTo("ButtonLabel.ShadowDistance")]
-		public _Vector2 ShadowDistance;
+		public _Vector2_ ShadowDistance;
 
 		/// <summary>
 		/// Button text outline color.
 		/// </summary>
 		/// <d>The outline color of the button label text.</d>
 		[MapTo("ButtonLabel.OutlineColor")]
-		public _Color OutlineColor;
+		public _Color_ OutlineColor;
 
 		/// <summary>
 		/// Button text outline distance.
 		/// </summary>
 		/// <d>The distance of the button label text outline.</d>
 		[MapTo("ButtonLabel.OutlineDistance")]
-		public _Vector2 OutlineDistance;
+		public _Vector2_ OutlineDistance;
 
 		/// <summary>
 		/// Adjust button to text.
 		/// </summary>
 		/// <d>An enum indiciating how the button should adjust its size to the label text. By default the button does not adjust its size to the text. Is used in conjunction with the TextPadding field to get the desired size of the button in relation to its text.</d>
 		[MapTo("ButtonLabel.AdjustToText")]
-		public _AdjustToText AdjustToText;
+		public _AdjustToText_ AdjustToText;
 
 		#endregion
 
@@ -144,14 +144,14 @@ namespace NUXML.Views.NGUI
 		/// Indicates if this button is set to toggle.
 		/// </summary>
 		/// <d>If IsToggleButton is set to true the button will toggle between pressed and unpressed (default) state when clicked.</d>
-		public _bool IsToggleButton;
+		public _bool_ IsToggleButton;
 
 		/// <summary>
 		/// Indicates if the button is disabled.
 		/// </summary>
 		/// <d>If set to true the button enters the "Disabled" state and can't be interacted with.</d>
 		[ChangeHandler("IsDisabledChanged")]
-		public _bool IsDisabled;
+		public _bool_ IsDisabled;
 
 		/// <summary>
 		/// Button toggle value.
@@ -165,49 +165,49 @@ namespace NUXML.Views.NGUI
 		/// </summary>
 		/// <d>The button TextPadding is used when AdjustToText is set. It determines the additional padding to be added to the size of the button when it adjusts to the text.</d>
 		[ChangeHandler("TextChanged")]
-		public _ElementMargin TextPadding;
+		public _ElementMargin_ TextPadding;
 
 		/// <summary>
 		/// Indicates if user can toggle on the button.
 		/// </summary>
 		/// <d>Boolean indicating if the button can be toggled on by user interaction. If set to false the button can only be toggled on programmatically.</d>
-		public _bool CanToggleOn;
+		public _bool_ CanToggleOn;
 
 		/// <summary>
 		/// Indicates if user can toggle off the button.
 		/// </summary>
 		/// <d>Boolean indicating if the button can be toggled off by user interaction. If set to false the button can only be toggled on programmatically.</d>
-		public _bool CanToggleOff;
+		public _bool_ CanToggleOff;
 
 		/// <summary>
 		/// Button click action.
 		/// </summary>
 		/// <d>The button click action is triggered when the user clicks on the button.</d>
-		public ViewAction Click;
+		public NGUIViewAction Click;
 
 		/// <summary>
 		/// Button mouse enter action.
 		/// </summary>
 		/// <d>The button mouse enter action is triggered when the mouse enters the button.</d>
-		public ViewAction MouseEnter;
+		public NGUIViewAction MouseEnter;
 
 		/// <summary>
 		/// Button mouse exit action.
 		/// </summary>
 		/// <d>The button mouse exit action is triggered when the mouse exits the button.</d>
-		public ViewAction MouseExit;
+		public NGUIViewAction MouseExit;
 
 		/// <summary>
 		/// Button mouse down action.
 		/// </summary>
 		/// <d>The button mouse down action is triggered when the mouse is pressed over the button.</d>
-		public ViewAction MouseDown;
+		public NGUIViewAction MouseDown;
 
 		/// <summary>
 		/// Button mouse down action.
 		/// </summary>
 		/// <d>The button mouse up action is triggered when the mouse is pressed and then released over the button.</d>
-		public ViewAction MouseUp;
+		public NGUIViewAction MouseUp;
 
 		/// <summary>
 		/// Indicates if the button is pressed.
